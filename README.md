@@ -73,3 +73,11 @@ The new **2026 Live** tab reads `data-2026.json`, produced by `scripts/sync_slee
 The schedule runs Tuesdays at 15:17 UTC. GitHub can delay scheduled workflows; the exact execution time is not guaranteed. It fetches settled weeks through the last completed NFL regular-season week, and records the API response update time. Sleeper stat corrections can alter previous weeks; the script re-reads all completed weeks. The script uses Python's standard library and Sleeper's public API, so no API key or paid service is needed. Free plan limits and third-party service terms may change.
 
 **To refresh immediately:** Run the GitHub Actions workflow manually or execute `python scripts/sync_sleeper_2026.py` locally with Internet access, then deploy the new `data-2026.json`.
+
+## v7: Weekly 2026 results across the entire site
+
+When the Tuesday GitHub Action updates `data-2026.json`, the website automatically merges that snapshot with the **immutable** 2015–2025 archive in the visitor's browser. The same 2026 wins, losses, PF, and PA now appear in **all-time leaderboards, manager profiles, and the Season Explorer's 2026 tab**, in addition to **2026 Live**. Career totals and percentages are recalculated on every page load, never incremented on top of prior weekly copies. No change to the existing Tuesday job is needed.
+
+**Important:** 2026 is a provisional season. It contributes current regular-season stats but not championships, runner-ups, playoff records, last-place finishes, or historical seeding. 2026 career points are partial-year and should not be interpreted as a completed season. The League Scoring Through the Years chart uses completed seasons only. If the snapshot is missing or its season is not 2026, the site stays on the 2015–2025 historical baseline.
+
+The static `data.json` still holds the finalized archive; do not overwrite it with weekly live snapshots. If you have a new manager in 2026 who is not in `LIVE_NAMES`, add their Sleeper username-to-name mapping in `index.html` before deployment.
