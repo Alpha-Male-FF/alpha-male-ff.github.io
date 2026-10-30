@@ -126,7 +126,7 @@ leaders=function(){
     rows=(key==="AvgPoints"?D.totals.filter(x=>x.W+x.L+x.T>0).map(x=>({Manager:x.Manager,Weeks:x.W+x.L+x.T,Value:x.PF/(x.W+x.L+x.T)})):Object.values(per).map(x=>({...x,Value:x[key]}))).sort((a,b)=>b.Value-a.Value);
     columns=["Manager","Weeks",key==="AvgPoints"?"Avg points":"Milestone weeks"];
   }
-  const barItems=rows.slice(0,10).map(x=>({...x,Manager:x.Manager+(x.Year?" · "+x.Year+" W"+x.Week:"")}));
+  const barItems=rows.filter(x=>x.Manager==='Mike'||(D.totals.find(t=>t.Manager===x.Manager)?.Seasons||0)>=4).slice(0,10).map(x=>({...x,Manager:x.Manager+(x.Year?" · "+x.Year+" W"+x.Week:"")}));
   const graph=key==="Close"?barChart(title+" · smallest margins",barItems,x=>Math.max(0.01,5-x.Value),x=>round(x.Value)):barChart(title+" · top 10",barItems,x=>x.Value,x=>key==="Streak"||["Hundred","OneFifty","TwoHundred"].includes(key)?x.Value:key==="AvgPoints"?Number(x.Value).toFixed(3):round(x.Value));
   let activePanel='';
   if(key==='Streak'){
