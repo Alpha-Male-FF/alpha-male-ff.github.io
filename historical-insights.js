@@ -29,7 +29,26 @@ function pctDisplay(n){return n.toFixed(1)+'%'}
 function recordPanel(title,heads,rows){return panel(title,table(heads,rows.length?rows:[tr(['No scored matchups available yet.'])]))}
 function weekPanel(y){const games=resultsFor(y),weeks=[...new Set(games.map(g=>g.week))];let week=window.archiveWeek;if(!weeks.includes(week))week=weeks[0];window.archiveWeek=week;const shown=games.filter(g=>g.week===week);return '<h2 class="sectitle">Week-by-week results · '+y+'</h2><div class="toolbar"><select id="archiveWeekSelect" onchange="window.archiveWeek=Number(this.value);render()">'+weeks.map(w=>'<option value="'+w+'" '+(w===week?'selected':'')+'>Week '+w+'</option>').join('')+'</select></div>'+recordPanel('Week '+(week||'—')+' · '+shown.length+' historical matchups',['Matchup','Score','Winner','Phase'],shown.map(g=>tr([managerLink(g.a)+' vs '+managerLink(g.b),fmt(g.scoreA)+' – '+fmt(g.scoreB),g.winner?managerLink(g.winner):'Tie',esc(label(g))])))+'<p class="muted small">Week scores are from historical NFL recap files and Sleeper matchup API data. Missing archived weeks are omitted, not treated as losses. Postseason placement games may not have an independently verified bracket designation.</p>'}
 function scoredWeeks(){return allGames().flatMap(g=>[{name:g.a,opponent:g.b,points:Number(g.scoreA),opp:Number(g.scoreB),year:g.year,week:g.week,post:isPlayoff(g)},{name:g.b,opponent:g.a,points:Number(g.scoreB),opp:Number(g.scoreA),year:g.year,week:g.week,post:isPlayoff(g)}])}
-function streaks(){const by={};for(const x of scoredWeeks().filter(g=>!g.post))(by[x.name]??=[]).push(x);const out=[];for(const [name,arr] of Object.entries(by)){arr.sort((a,b)=>a.year-b.year||a.week-b.week);let current=0,start=null,previous=null;for(const g of arr){const continuous=previous&&((g.year===previous.year&&g.week===previous.week+1)||(g.year===previous.year+1&&g.week===1));if(!continuous)current=0;if(g.points>g.opp){if(!current)start={year:g.year,week:g.week};current++;out.push({name,n:current,start,end:{year:g.year,week:g.week}})}else current=0;previous=g}}return out.sort((a,b)=>b.n-a.n)}
+function streaks(){
+ const by={};
+ for(const x of scoredWeeks().filter(g=>!g.post))(by[x.name]??=[]).push(x);
+ const out=[];
+ for(const [name,arr] of Object.entries(by)){
+   // Unique scored week per manager. A single player cannot have two results in one league week.
+   const weeks=new Map();
+   for(const g of arr){const k=g.year+':'+g.week;if(!weeks.has(k))weeks.set(k,g)}
+   const ordered=[...weeks.values()].sort((a,b)=>a.year-b.year||a.week-b.week);
+   let current=0,start=null,previous=null;
+   for(const g of ordered){
+     const continuous=previous&&g.year===previous.year&&g.week===previous.week+1;
+     if(!continuous)current=0;
+     if(g.points>g.opp){if(!current)start={year:g.year,week:g.week};current++;out.push({name,n:current,start,end:{year:g.year,week:g.week}})}
+     else current=0;
+     previous=g;
+   }
+ }
+ return out.sort((a,b)=>b.n-a.n||a.name.localeCompare(b.name));
+}
 const oldRefresh=refreshHeadToHead;
 refreshHeadToHead=function(extra=[]){
   oldRefresh(extra);
