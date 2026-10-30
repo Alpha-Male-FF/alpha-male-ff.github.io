@@ -7,7 +7,7 @@ const api='https://api.sleeper.app/v1';
 const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const tabular=(heads,rows)=>'<div><table><thead><tr>'+heads.map(x=>'<th>'+safe(x)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(x=>'<td>'+safe(x)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
 async function get(url){const r=await fetch(url);if(!r.ok)throw Error('HTTP '+r.status);return r.json()}
-const rosterWeeks=new Map(),playerManagers=new Map(),trades=[],draftPicks=[],failed=[];
+const rosterWeeks=new Map(),playerManagers=new Map(),trades=[],draftPicks=[],failed=[],playerScores=new Map(),playerMoves=[];
 let playerNames={},tab='all';
 function name(id){const p=playerNames[id];return p?(p.full_name||[p.first_name,p.last_name].filter(Boolean).join(' ')):String(id)}
 async function season(y,id,currentWeek){
@@ -22,9 +22,9 @@ async function season(y,id,currentWeek){
  for(const draft of drafts){if(!draft.draft_id)continue;const picks=await get(api+'/draft/'+draft.draft_id+'/picks').catch(()=>[]);for(const pick of picks){const manager=rosterName.get(Number(pick.roster_id));if(manager&&pick.player_id)Number(pick.round)===1&&draftPicks.push({year:y,manager,player:pick.player_id})}}
  const seen=new Set();
  for(const data of weeks.filter(Boolean)){
- for(const r of data.matchups){const manager=rosterName.get(Number(r.roster_id));if(!manager)continue;
+ for(const r of data.matchups){for(const [id,pts] of Object.entries(r.players_points||{})){const k=y+'|'+data.week+'|'+id;if(!playerScores.has(k))playerScores.set(k,Number(pts)||0)}const manager=rosterName.get(Number(r.roster_id));if(!manager)continue;
  for(const id of new Set(r.players||[])){const mkey=y+'|'+data.week+'|'+manager+'|'+id;if(rosterWeeks.has(mkey))continue;rosterWeeks.set(mkey,{manager,player:id,year:y,week:data.week});const pm=playerManagers.get(id)||new Map();const one=pm.get(manager)||new Set();one.add(y);pm.set(manager,one);playerManagers.set(id,pm)}}
- for(const x of data.tx){if(x.type!=='trade'||x.status!=='complete'||seen.has(String(x.transaction_id)))continue;seen.add(String(x.transaction_id));const parties=[...new Set((x.roster_ids||[]).map(id=>rosterName.get(Number(id))).filter(Boolean))];const ids=[...new Set([...Object.keys(x.adds||{}),...Object.keys(x.drops||{})])];trades.push({year:y,week:data.week,parties,players:ids,id:x.transaction_id})}
+ for(const x of data.tx){if(x.status!=='complete'||seen.has(String(x.transaction_id)))continue;seen.add(String(x.transaction_id));if(x.type==='waiver'||x.type==='free_agent'){for(const [player,rosterId] of Object.entries(x.adds||{})){const manager=rosterName.get(Number(rosterId));if(manager)playerMoves.push({year:y,week:data.week,manager,player,kind:'add',via:x.type})}for(const [player,rosterId] of Object.entries(x.drops||{})){const manager=rosterName.get(Number(rosterId));if(manager)playerMoves.push({year:y,week:data.week,manager,player,kind:'drop',via:x.type})}}if(x.type!=='trade')continue;const parties=[...new Set((x.roster_ids||[]).map(id=>rosterName.get(Number(id))).filter(Boolean))];const ids=[...new Set([...Object.keys(x.adds||{}),...Object.keys(x.drops||{})])];trades.push({year:y,week:data.week,parties,players:ids,id:x.transaction_id})}
  }
 }
 function render(){
@@ -43,8 +43,22 @@ function render(){
  const drafted='<section><h2>Most first-round draft picks · 2024–2026</h2>'+tabular(['Player','Draft selections'],topDrafts.slice(0,45).map(x=>[name(x[0]),x[1]]))+'</section><section><h2>Repeat first-round picks by manager</h2>'+tabular(['Manager','Player','Times drafted'],topDraftCombos.slice(0,35).map(x=>[x[0].split('|')[0],name(x[0].split('|')[1]),x[1]]))+'</section>';
  const overview='<section><h2>At a glance</h2><p>'+rows.length.toLocaleString()+' player-team-week appearances · '+playerMap.size+' unique player IDs · '+trades.length+' completed trades</p><p class="muted">A player-week counts a player listed on a team\'s full roster, including bench, once per week. A traded player counts once per completed transaction when identifiable in the transaction adds/drops. Draft-pick-only trades count toward trade partnerships but have no player to credit.</p></section>';
  const players='<section><h2>Who stayed on teams the most?</h2>'+tabular(['Player','Rostered weeks','Managers'],ranked.slice(0,35).map(x=>[name(x.id),x.weeks,x.managers.size]))+'</section><section><h2>Manager × player loyalty</h2>'+tabular(['Manager','Player','Rostered weeks','Seasons'],loyalty.slice(0,70).map(x=>[x.manager,name(x.id),x.weeks,x.years]))+'</section>';
+ const dropped=new Map(),pickup=new Map(),streams=new Map();
+ const addMoves=playerMoves.filter(x=>x.kind==='add'),dropMoves=playerMoves.filter(x=>x.kind==='drop');
+ for(const x of dropMoves)dropped.set(x.player,(dropped.get(x.player)||0)+1);
+ const futurePoints=x=>{let total=0,scored=0;for(let w=x.week+1;w<=17;w++){const p=playerScores.get(x.year+'|'+w+'|'+x.player);if(p!==undefined){total+=p;scored++}}return scored?Math.round(total*100)/100:null};
+ const goodPickups=addMoves.filter(x=>x.via==='waiver').map(x=>({...x,future:futurePoints(x)})).filter(x=>x.future!==null).sort((a,b)=>b.future-a.future);
+ const badDrops=dropMoves.map(x=>({...x,future:futurePoints(x)})).filter(x=>x.future!==null).sort((a,b)=>b.future-a.future);
+ const dropsByManager=new Map(dropMoves.map(x=>[x.year+'|'+x.manager+'|'+x.player+'|'+x.week,x]));
+ for(const x of addMoves){if(dropsByManager.has(x.year+'|'+x.manager+'|'+x.player+'|'+(x.week+1)))streams.set(x.manager,(streams.get(x.manager)||0)+1)}
+ const droppedRank=[...dropped].sort((a,b)=>b[1]-a[1]);
+ const streamRank=[...streams].sort((a,b)=>b[1]-a[1]);
+ const waivers='<section><h2>Most dropped players</h2>'+tabular(['Player','Drops'],droppedRank.slice(0,40).map(x=>[name(x[0]),x[1]]))+'</section>'+
+ '<section><h2>Most streamed by manager</h2><p class="muted">Stream = a completed waiver/free-agent add followed by a drop by the same manager in the following league week. Week-specific transaction records must be available.</p>'+tabular(['Manager','Streams'],streamRank.map(x=>[x[0],x[1]]))+'</section>'+
+ '<section><h2>Best waiver pickups · remaining-season points</h2><p class="muted">Estimated using all available player points in subsequent weeks of the same season, regardless of which manager rostered the player later. This is not value over replacement.</p>'+tabular(['Year','Week','Manager','Player','Subsequent points'],goodPickups.slice(0,45).map(x=>[x.year,x.week,x.manager,name(x.player),x.future]))+'</section>'+
+ '<section><h2>Costliest drops · remaining-season points</h2><p class="muted">Subsequent points scored by the player anywhere in the league after the drop. Rankings are descriptive and can include players reacquired later.</p>'+tabular(['Year','Week','Manager','Player','Subsequent points'],badDrops.slice(0,45).map(x=>[x.year,x.week,x.manager,name(x.player),x.future]))+'</section>';
  const history='<section><h2>Most traded players</h2>'+tabular(['Player','Completed trades'],topTrades.slice(0,45).map(x=>[name(x[0]),x[1]]))+'</section><section><h2>Most frequent trade partners</h2>'+tabular(['Managers','Trades'],topPairs.map(x=>[x[0],x[1]]))+'</section><section><h2>Trade ledger</h2>'+tabular(['Season','Week','Managers','Players'],trades.sort((a,b)=>b.year-a.year||b.week-a.week).map(t=>[t.year,t.week,t.parties.join(' ↔ '),t.players.map(name).join(', ')||'Draft picks / FAAB']))+'</section>';
- document.querySelector('#main').innerHTML=overview+(tab==='all'||tab==='players'?players+drafted:'')+(tab==='all'||tab==='trades'?history:'');
+ document.querySelector('#main').innerHTML=overview+(tab==='all'||tab==='players'?players+drafted:'')+(tab==='all'||tab==='trades'?history+waivers:'');
 }
 document.querySelectorAll('[data-tab]').forEach(btn=>btn.onclick=()=>{tab=btn.dataset.tab;document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b===btn));render()});
 (async()=>{try{
