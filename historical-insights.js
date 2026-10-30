@@ -19,7 +19,7 @@ refreshHeadToHead=function(extra=[]){
   for(const m of D.matches){const hit=indexed.get(key(m));if(hit){m.scoreA=m.a===hit.a?hit.scoreA:hit.scoreB;m.scoreB=m.b===hit.b?hit.scoreB:hit.scoreA;m.source=hit.source||'Recovered matchup';if(!m.winner)m.winner=hit.winner}}
   const existing=new Set(D.matches.map(key));
   for(const g of allGames()){if(Number(g.year)>2023||!isPlayoff(g)||existing.has(key(g)))continue;
-    D.matches.push({year:g.year,week:g.week,round:'Recovered postseason matchup',bracket:'Consolation',a:g.a,b:g.b,teamA:g.teamA||'',teamB:g.teamB||'',winner:g.winner,scoreA:g.scoreA,scoreB:g.scoreB,source:'Recovered recap; bracket classification unverified'});existing.add(key(g))}
+    D.matches.push({year:g.year,week:g.week,round:'Recovered postseason matchup',bracket:'Recovered',a:g.a,b:g.b,teamA:g.teamA||'',teamB:g.teamB||'',winner:g.winner,scoreA:g.scoreA,scoreB:g.scoreB,source:'Recovered recap; bracket classification unverified'});existing.add(key(g))}
   if(activeManager&&page==='managers')showManager(activeManager);
   else if(page==='playoffs'||page==='seasons'||page==='leaders')render();
 };
@@ -44,6 +44,7 @@ leaders=function(){
 const origPlayoffs=playoffs;
 playoffs=function(){
  const y=Number(playoffYear);let html=origPlayoffs();
+ if(y<=2023)html=html.replace('</select></div><div class="banner"','<option '+(playoffBracket==='Recovered'?'selected':'')+'>Recovered</option></select></div><div class="banner"');
  if(y>2023)return html;
  const consolation=resultsFor(y).filter(g=>isPlayoff(g)&&!D.matches.some(m=>m.year===g.year&&m.week===g.week&&key(m)===key(g)&&m.bracket==='Championship'));
  if(playoffBracket==='Consolation'&&!consolation.length)return html.replace('Consolation outcomes are not available for ESPN seasons 2015–2023.','No additional recovered postseason games for this season.');
