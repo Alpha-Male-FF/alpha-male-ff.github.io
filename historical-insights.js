@@ -1,7 +1,26 @@
 /* Recovered NFL + Sleeper all-game analytics. Loaded after the primary site script. */
 (function(){
 let loaded=false;
-function allGames(){return (typeof ALL_HEAD_TO_HEAD==='undefined'?[]:ALL_HEAD_TO_HEAD).filter(g=>g&&g.a&&g.b&&g.a!==g.b&&Number.isFinite(Number(g.scoreA))&&Number.isFinite(Number(g.scoreB))&&g.scoreA!==null&&g.scoreB!==null)}
+function sameScoredMeeting(a,b){
+  if(a.year!==b.year||Math.abs(Number(a.week)-Number(b.week))>1)return false;
+  if([a.a,a.b].sort().join('|')!==[b.a,b.b].sort().join('|'))return false;
+  if(a.scoreA==null||a.scoreB==null||b.scoreA==null||b.scoreB==null)return false;
+  const scores=g=>g.a===a.a?[Number(g.scoreA),Number(g.scoreB)]:[Number(g.scoreB),Number(g.scoreA)];
+  const x=scores(a),y=scores(b);
+  return Math.abs(x[0]-y[0])<0.001&&Math.abs(x[1]-y[1])<0.001;
+}
+function deduplicateGames(items){
+ const ordered=[...items].sort((a,b)=>Number(String(b.source||'').includes('NFL recap'))-Number(String(a.source||'').includes('NFL recap')));
+ const unique=[];
+ for(const g of ordered){
+   const found=unique.find(x=>sameScoredMeeting(x,g)||(key(x)===key(g)&&x.scoreA==null&&g.scoreA==null));
+   if(!found)unique.push(g);
+ }
+ return unique.sort((a,b)=>a.year-b.year||a.week-b.week);
+}
+function allGames(){
+ return deduplicateGames((typeof ALL_HEAD_TO_HEAD==='undefined'?[]:ALL_HEAD_TO_HEAD).filter(g=>g&&g.a&&g.b&&g.a!==g.b&&g.scoreA!=null&&g.scoreB!=null&&Number.isFinite(Number(g.scoreA))&&Number.isFinite(Number(g.scoreB))));
+}
 function key(g){return [g.year,g.week,[g.a,g.b].sort().join('|')].join(':')}
 function isPlayoff(g){return g.playoff===true||(g.round&&g.round!=='Regular Season'&&g.round!=='Regular season'&&g.round!=='Regular')||Number(g.week)>=15}
 function resultsFor(y){return allGames().filter(g=>Number(g.year)===Number(y)).sort((a,b)=>a.week-b.week||a.a.localeCompare(b.a))}
@@ -19,6 +38,7 @@ refreshHeadToHead=function(extra=[]){
   // Count these as the same meeting, not two rivalry games.
   const sourceGames=ALL_HEAD_TO_HEAD.filter(g=>String(g.source||'').includes('NFL recap'));
   ALL_HEAD_TO_HEAD=ALL_HEAD_TO_HEAD.filter(g=>!String(g.source||'').includes('Reconstructed from seeds')||!sourceGames.some(n=>n.year===g.year&&n.winner===g.winner&&Math.abs(n.week-g.week)<=1&&[n.a,n.b].sort().join('|')===[g.a,g.b].sort().join('|')));
+  ALL_HEAD_TO_HEAD=deduplicateGames(ALL_HEAD_TO_HEAD);
   const indexed=new Map(allGames().map(g=>[key(g),g]));
   for(const m of D.matches){const hit=indexed.get(key(m));if(hit&&m.scoreA==null&&(!m.winner||m.winner===hit.winner)){m.scoreA=m.a===hit.a?hit.scoreA:hit.scoreB;m.scoreB=m.b===hit.b?hit.scoreB:hit.scoreA;m.source=hit.source||'Recovered matchup';if(!m.winner)m.winner=hit.winner}}
   const existing=new Set(D.matches.map(key));
