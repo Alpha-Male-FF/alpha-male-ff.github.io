@@ -41,6 +41,23 @@ refreshHeadToHead=function(extra=[]){
   ALL_HEAD_TO_HEAD=deduplicateGames(ALL_HEAD_TO_HEAD);
   const indexed=new Map(allGames().map(g=>[key(g),g]));
   for(const m of D.matches){const hit=indexed.get(key(m));if(hit&&m.scoreA==null&&(!m.winner||m.winner===hit.winner)){m.scoreA=m.a===hit.a?hit.scoreA:hit.scoreB;m.scoreB=m.b===hit.b?hit.scoreB:hit.scoreA;m.source=hit.source||'Recovered matchup';if(!m.winner)m.winner=hit.winner}}
+  // Remove bracket placeholders whose pairings contradict recorded weekly results.
+  // Preserve genuinely missing 2017/2022 title-week fixtures as pending.
+  D.matches=D.matches.filter(m=>{
+    if(m.year!==2019&&m.year!==2023)return true;
+    if(m.scoreA!=null||m.bracket!=='Championship')return true;
+    if(m.year===2019&&m.week===15&&[m.a,m.b].sort().join('|')==='Joey|Justin')return false;
+    if(m.year===2023&&m.week===15&&(['Kody|Sean','Joey|Zach'].includes([m.a,m.b].sort().join('|'))))return false;
+    return true;
+  });
+  // Actual 2023 first-round pairings are established by scored original recaps.
+  if(ALL_HEAD_TO_HEAD.some(g=>g.year===2023&&g.week===15)){
+    for(const g of allGames().filter(g=>g.year===2023&&g.week===15)){
+      if(![['Joey','Sean'],['Kody','Zach']].some(pair=>pair.sort().join('|')===[g.a,g.b].sort().join('|')))continue;
+      if(D.matches.some(m=>key(m)===key(g)))continue;
+      D.matches.push({year:2023,week:15,round:'Quarterfinal',bracket:'Championship',a:g.a,b:g.b,teamA:g.teamA||'',teamB:g.teamB||'',winner:g.winner,scoreA:g.scoreA,scoreB:g.scoreB,source:'NFL recap'});
+    }
+  }
   const existing=new Set(D.matches.map(key));
   for(const g of allGames()){if(Number(g.year)>2023||!isPlayoff(g)||existing.has(key(g))||D.matches.some(m=>m.year===g.year&&m.winner===g.winner&&Math.abs(m.week-g.week)<=1&&[m.a,m.b].sort().join('|')===[g.a,g.b].sort().join('|')))continue;
     D.matches.push({year:g.year,week:g.week,round:'Postseason matchup',bracket:'Recovered',a:g.a,b:g.b,teamA:g.teamA||'',teamB:g.teamB||'',winner:g.winner,scoreA:g.scoreA,scoreB:g.scoreB,source:'Archived recap; bracket classification unverified'});existing.add(key(g))}
