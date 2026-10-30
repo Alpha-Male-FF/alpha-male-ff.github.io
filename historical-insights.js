@@ -16,7 +16,7 @@ refreshHeadToHead=function(extra=[]){
   oldRefresh(extra);
   if(!D)return;
   const indexed=new Map(allGames().map(g=>[key(g),g]));
-  for(const m of D.matches){const hit=indexed.get(key(m));if(hit){m.scoreA=m.a===hit.a?hit.scoreA:hit.scoreB;m.scoreB=m.b===hit.b?hit.scoreB:hit.scoreA;m.source=hit.source||'Recovered matchup';if(!m.winner)m.winner=hit.winner}}
+  for(const m of D.matches){const hit=indexed.get(key(m));if(hit&&m.scoreA==null&&(!m.winner||m.winner===hit.winner)){m.scoreA=m.a===hit.a?hit.scoreA:hit.scoreB;m.scoreB=m.b===hit.b?hit.scoreB:hit.scoreA;m.source=hit.source||'Recovered matchup';if(!m.winner)m.winner=hit.winner}}
   const existing=new Set(D.matches.map(key));
   for(const g of allGames()){if(Number(g.year)>2023||!isPlayoff(g)||existing.has(key(g)))continue;
     D.matches.push({year:g.year,week:g.week,round:'Recovered postseason matchup',bracket:'Recovered',a:g.a,b:g.b,teamA:g.teamA||'',teamB:g.teamB||'',winner:g.winner,scoreA:g.scoreA,scoreB:g.scoreB,source:'Recovered recap; bracket classification unverified'});existing.add(key(g))}
