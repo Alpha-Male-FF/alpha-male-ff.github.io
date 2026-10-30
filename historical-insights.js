@@ -15,10 +15,14 @@ const oldRefresh=refreshHeadToHead;
 refreshHeadToHead=function(extra=[]){
   oldRefresh(extra);
   if(!D)return;
+  // Reconstructed brackets sometimes use Week 17 for NFL Week 16 recaps.
+  // Count these as the same meeting, not two rivalry games.
+  const sourceGames=ALL_HEAD_TO_HEAD.filter(g=>String(g.source||'').includes('NFL recap'));
+  ALL_HEAD_TO_HEAD=ALL_HEAD_TO_HEAD.filter(g=>!String(g.source||'').includes('Reconstructed from seeds')||!sourceGames.some(n=>n.year===g.year&&n.winner===g.winner&&Math.abs(n.week-g.week)<=1&&[n.a,n.b].sort().join('|')===[g.a,g.b].sort().join('|')));
   const indexed=new Map(allGames().map(g=>[key(g),g]));
   for(const m of D.matches){const hit=indexed.get(key(m));if(hit&&m.scoreA==null&&(!m.winner||m.winner===hit.winner)){m.scoreA=m.a===hit.a?hit.scoreA:hit.scoreB;m.scoreB=m.b===hit.b?hit.scoreB:hit.scoreA;m.source=hit.source||'Recovered matchup';if(!m.winner)m.winner=hit.winner}}
   const existing=new Set(D.matches.map(key));
-  for(const g of allGames()){if(Number(g.year)>2023||!isPlayoff(g)||existing.has(key(g)))continue;
+  for(const g of allGames()){if(Number(g.year)>2023||!isPlayoff(g)||existing.has(key(g))||D.matches.some(m=>m.year===g.year&&m.winner===g.winner&&Math.abs(m.week-g.week)<=1&&[m.a,m.b].sort().join('|')===[g.a,g.b].sort().join('|')))continue;
     D.matches.push({year:g.year,week:g.week,round:'Recovered postseason matchup',bracket:'Recovered',a:g.a,b:g.b,teamA:g.teamA||'',teamB:g.teamB||'',winner:g.winner,scoreA:g.scoreA,scoreB:g.scoreB,source:'Recovered recap; bracket classification unverified'});existing.add(key(g))}
   if(activeManager&&page==='managers')showManager(activeManager);
   else if(page==='playoffs'||page==='seasons'||page==='leaders')render();
