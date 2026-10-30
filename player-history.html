@@ -42,7 +42,7 @@ function render(){
 }
 document.querySelectorAll('[data-tab]').forEach(btn=>btn.onclick=()=>{tab=btn.dataset.tab;document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b===btn));render()});
 (async()=>{try{
- const state=await get(api+'/state/nfl');const w=state.season==='2026'?Number(state.week||1):1;
+ let state={};try{state=await get(api+'/state/nfl')}catch(e){try{const snapshot=await get('./data-2026.json');state={season:'2026',week:Math.max(1,...(snapshot.completed_weeks||[]).map(x=>Number(x.week)+1))}}catch(ignore){state={season:'2026',week:1}}}const w=String(state.season)==='2026'?Number(state.week||1):1;
  await Promise.all(Object.entries(leagues).map(async([y,id])=>{try{await season(Number(y),id,w)}catch(e){failed.push(y+': '+e.message)}}));
  render();document.querySelector('#status').textContent='Loaded 2024–2026 Sleeper records. '+(failed.length?failed.length+' weekly/API requests failed; figures are partial.':'All requested weekly endpoints responded.');
  try{const names=await get(api+'/players/nfl');playerNames=names;render()}catch(e){document.querySelector('#status').textContent+=' Player names unavailable; showing IDs.'}
