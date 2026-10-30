@@ -11,7 +11,8 @@ window.loadSleeperHistory=async function(){
    const byRoster=new Map(rosters.map(r=>[Number(r.roster_id),r]));
    const who=(id)=>{const r=byRoster.get(Number(id));if(!r)return null;const u=byUser.get(String(r.owner_id));if(!u)return null;const username=u.display_name||u.username||"";const name=aliases[username]||aliases[u.username]||null;return name?{manager:name,team:(u.metadata&&u.metadata.team_name)||username}:null};
    const games=[];
-   const weeks=await Promise.all(Array.from({length:Number(year)===2026?18:17},(_,i)=>i+1).map(async week=>{try{return {week,records:await get(api+"/league/"+id+"/matchups/"+week)}}catch(e){return {week,records:[],error:String(e)}}}));
+   const allowedWeeks=Number(year)===2026?Math.max(0,Math.min(18,Number((await get(api+"/state/nfl")).week||1)-1)):17;
+   const weeks=await Promise.all(Array.from({length:allowedWeeks},(_,i)=>i+1).map(async week=>{try{return {week,records:await get(api+"/league/"+id+"/matchups/"+week)}}catch(e){return {week,records:[],error:String(e)}}}));
    let failed=0;
    for(const {week,records,error} of weeks){if(error){failed++;continue}const groups=new Map();for(const r of records){if(r.matchup_id==null)continue;let pair=groups.get(r.matchup_id)||[];pair.push(r);groups.set(r.matchup_id,pair)}
     for(const pair of groups.values()){if(pair.length!==2)continue;const [x,y]=pair,a=who(x.roster_id),b=who(y.roster_id);if(!a||!b||a.manager===b.manager||x.points==null||y.points==null)continue;
