@@ -30,4 +30,27 @@ const maxPage=Math.max(0,Math.ceil(v.length/pageSize)-1);page=Math.min(page,maxP
 $('#games').innerHTML=v.slice(page*pageSize,(page+1)*pageSize).map(g=>`<tr><td>${g.year}</td><td>${g.week}</td><td>${safe(g.aName)}<div class="muted">${safe(g.a)}</div></td><td><b>${fmt(g.aScore)}–${fmt(g.bScore)}</b></td><td>${safe(g.bName)}<div class="muted">${safe(g.b)}</div></td><td>${g.playoff?'Postseason':'Regular'}</td><td><a target="_blank" rel="noopener noreferrer" href="${safe(g.source)}">Source</a></td></tr>`).join('');
 $('#metrics').innerHTML=[['Recovered games',v.length],['Scored team-weeks',v.length*2],['Managers',new Set(v.flatMap(g=>[g.a,g.b])).size],['Seasons',new Set(v.map(g=>g.year)).size]].map(([k,n])=>`<div class="tile"><span class="muted">${k}</span><b>${n}</b></div>`).join('');}
 for(const s of ['year','phase','manager','search'])$("#"+s).addEventListener(s==='search'?'input':'change',()=>{page=0;redraw()});$('#prev').onclick=()=>{page--;redraw()};$('#next').onclick=()=>{page++;redraw()};redraw();
+</script><script src="./sleeper-history.js"></script><script>
+(async()=>{
+ const note=document.createElement('div');note.className='muted';note.style='margin:12px auto;padding:12px 18px;max-width:1200px;border:1px solid #42516a;border-radius:8px';note.textContent='Loading 2024–2025 Sleeper matchup scores…';document.body.insertBefore(note,document.body.firstChild);
+ try{
+   const result=await window.loadSleeperHistory();
+   const existing=new Set(games.map(g=>[g.year,g.week,[g.a,g.b].sort().join('|')].join(':')));
+   let count=0;
+   for(const m of result.games){
+     const key=[m.year,m.week,[m.a,m.b].sort().join('|')].join(':');
+     if(existing.has(key))continue;existing.add(key);
+     games.push({year:m.year,week:m.week,playoff:m.playoff,a:m.a,b:m.b,aName:m.teamA,bName:m.teamB,aScore:m.scoreA,bScore:m.scoreB,winner:m.winner===m.a?'a':m.winner===m.b?'b':null,source:'https://sleeper.com/leagues/'+(m.year===2024?'1137184732384940032':'1257118106497593344')});
+     count++;
+   }
+   const ms=[...new Set(games.flatMap(g=>[g.a,g.b]))].sort(),ys=[...new Set(games.map(g=>g.year))].sort();
+   managers.splice(0,managers.length,...ms);
+   for(const y of ys){if(![...document.querySelector('#year').options].some(o=>o.value===String(y)))document.querySelector('#year').insertAdjacentHTML('beforeend','<option>'+y+'</option>')}
+   const sel=document.querySelector('#manager'),current=sel.value;
+   sel.innerHTML='<option value="all">All managers</option>'+ms.map(m=>'<option value="'+safe(m)+'">'+safe(m)+'</option>').join('');
+   if(ms.includes(current))sel.value=current;
+   note.textContent='2015–2023 NFL archive + 2024–2025 Sleeper matchups. Added '+count+' Sleeper head-to-head results. Historical missing weeks remain excluded.';
+   redraw();
+ }catch(e){note.textContent='NFL historical matchups loaded. Sleeper 2024–2025 scores could not be retrieved: '+e.message;}
+})();
 </script></body></html>
