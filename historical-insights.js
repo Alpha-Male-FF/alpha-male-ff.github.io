@@ -108,7 +108,7 @@ leaders=function(){
   const key=leaderMetric;
   if(!["HighScore","Blowout","Streak","Close","LowScore","Hundred","OneFifty","TwoHundred","AvgPoints","Combined"].includes(key))return origLeaders();
   const games=allGames(),sw=scoredWeeks(),round=n=>Number(n||0).toFixed(2);
-  let rows=[],title=metrics[key],subtitle="2015–2026 · regular season and playoffs",columns=[];
+  let rows=[],title=metrics[key],subtitle=key==="AvgPoints"?"Career regular-season totals ÷ completed regular-season games, including live 2026":"2015–2026 · regular season and playoffs",columns=[];
   if(key==="HighScore"||key==="LowScore"){
     rows=[...sw].sort((a,b)=>key==="HighScore"?b.points-a.points:a.points-b.points).slice(0,30).map(x=>({Manager:x.name,Opponent:x.opponent,Year:x.year,Week:x.week,Value:x.points}));
     columns=["Manager","Opponent","Year","Week","Points"];
@@ -123,7 +123,7 @@ leaders=function(){
   }else {
     const per={};
     for(const g of sw){const x=per[g.name]??={Manager:g.name,Weeks:0,Points:0,Hundred:0,OneFifty:0,TwoHundred:0};x.Weeks++;x.Points+=g.points;if(g.points>=100)x.Hundred++;if(g.points>=150)x.OneFifty++;if(g.points>=200)x.TwoHundred++}
-    rows=Object.values(per).map(x=>({...x,Value:key==="AvgPoints"?x.Points/x.Weeks:x[key]})).sort((a,b)=>b.Value-a.Value);
+    rows=(key==="AvgPoints"?D.totals.filter(x=>x.W+x.L+x.T>0).map(x=>({Manager:x.Manager,Weeks:x.W+x.L+x.T,Value:x.PF/(x.W+x.L+x.T)})):Object.values(per).map(x=>({...x,Value:x[key]}))).sort((a,b)=>b.Value-a.Value);
     columns=["Manager","Weeks",key==="AvgPoints"?"Avg points":"Milestone weeks"];
   }
   const barItems=rows.slice(0,10).map(x=>({...x,Manager:x.Manager+(x.Year?" · "+x.Year+" W"+x.Week:"")}));
