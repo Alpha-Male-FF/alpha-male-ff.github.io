@@ -64,8 +64,19 @@ refreshHeadToHead=function(extra=[]){
   if(activeManager&&page==='managers')showManager(activeManager);
   else if(page==='playoffs'||page==='seasons'||page==='leaders')render();
 };
+// Keep scored 2026 games in every historical leaderboard even if the live API is unavailable.
+const baseMergeLiveIntoHistory=mergeLiveIntoHistory;
+mergeLiveIntoHistory=function(snapshot){
+  baseMergeLiveIntoHistory(snapshot);
+  const seen=[...ALL_HEAD_TO_HEAD];
+  const recent=(snapshot?.recent_matchups||[]).filter(g=>g.home&&g.away&&g.home.points!=null&&g.away.points!=null).map(g=>{
+    const a=liveName(g.home),b=liveName(g.away),scoreA=Number(g.home.points),scoreB=Number(g.away.points);
+    return {year:2026,week:g.week,round:'Regular Season',playoff:false,a,b,teamA:g.home.team_name||'',teamB:g.away.team_name||'',scoreA,scoreB,winner:scoreA>scoreB?a:scoreB>scoreA?b:null,source:'Sleeper 2026 snapshot'};
+  });
+  refreshHeadToHead([...seen,...recent]);
+};
 const origSeasons=seasons;
-seasons=function(){return origSeasons()+((Number(seasonYear)<=2025)?weekPanel(seasonYear):'')};
+seasons=function(){return origSeasons()+((Number(seasonYear)<=2026)?weekPanel(seasonYear):'')};
 const origLeaders=leaders;
 Object.assign(metrics,{
   HighScore:"Single-week scoring",Blowout:"Largest blowouts",Streak:"Win streaks",
@@ -77,7 +88,7 @@ leaders=function(){
   const key=leaderMetric;
   if(!["HighScore","Blowout","Streak","Close","LowScore","Hundred","OneFifty","TwoHundred","AvgPoints","Combined"].includes(key))return origLeaders();
   const games=allGames(),sw=scoredWeeks(),round=n=>Number(n||0).toFixed(2);
-  let rows=[],title=metrics[key],subtitle="2015–2025 · regular season and playoffs",columns=[];
+  let rows=[],title=metrics[key],subtitle="2015–2026 · regular season and playoffs",columns=[];
   if(key==="HighScore"||key==="LowScore"){
     rows=[...sw].sort((a,b)=>key==="HighScore"?b.points-a.points:a.points-b.points).slice(0,30).map(x=>({Manager:x.name,Opponent:x.opponent,Year:x.year,Week:x.week,Value:x.points}));
     columns=["Manager","Opponent","Year","Week","Points"];
