@@ -5,7 +5,7 @@ const aliases={"G-wizz":"Mike",jlong11:"Justin",ryan14cook:"Ryan",ajgardner307:"
 const api="https://api.sleeper.app/v1";
 async function get(url){const c=new AbortController(),t=setTimeout(()=>c.abort(),18000);try{const r=await fetch(url,{signal:c.signal});if(!r.ok)throw Error("Sleeper "+r.status);return await r.json()}finally{clearTimeout(t)}}
 window.loadSleeperHistory=async function(){
- const seasons=await Promise.all(Object.entries(leagues).map(async([year,id])=>{
+ const seasons=await Promise.all(Object.entries(leagues).map(async([year,id])=>{try{
    const [users,rosters]=await Promise.all([get(api+"/league/"+id+"/users"),get(api+"/league/"+id+"/rosters")]);
    const byUser=new Map(users.map(u=>[String(u.user_id),u]));
    const byRoster=new Map(rosters.map(r=>[Number(r.roster_id),r]));
@@ -21,7 +21,7 @@ window.loadSleeperHistory=async function(){
     }
    }
    return {year:Number(year),games,failedWeeks:failed};
- }));
+ }catch(error){return {year:Number(year),games:[],failedWeeks:18,error:String(error)};} }));
  return {games:seasons.flatMap(s=>s.games),seasons};
 };
 })();
