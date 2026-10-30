@@ -127,7 +127,7 @@ leaders=function(){
     columns=["Manager","Weeks",key==="AvgPoints"?"Avg points":"Milestone weeks"];
   }
   const barItems=rows.slice(0,10).map(x=>({...x,Manager:x.Manager+(x.Year?" · "+x.Year+" W"+x.Week:"")}));
-  const graph=key==="Close"?barChart(title+" · smallest margins",barItems,x=>Math.max(0.01,5-x.Value),x=>round(x.Value)):barChart(title+" · top 10",barItems,x=>x.Value,x=>key==="Streak"||["Hundred","OneFifty","TwoHundred"].includes(key)?x.Value:round(x.Value));
+  const graph=key==="Close"?barChart(title+" · smallest margins",barItems,x=>Math.max(0.01,5-x.Value),x=>round(x.Value)):barChart(title+" · top 10",barItems,x=>x.Value,x=>key==="Streak"||["Hundred","OneFifty","TwoHundred"].includes(key)?x.Value:key==="AvgPoints"?Number(x.Value).toFixed(3):round(x.Value));
   let activePanel='';
   if(key==='Streak'){
     const current=allGames().filter(g=>g.year===2026&&!isPlayoff(g));
@@ -142,7 +142,7 @@ leaders=function(){
     }).filter(x=>x.Value>0).sort((a,b)=>b.Value-a.Value||a.Manager.localeCompare(b.Manager));
     activePanel=panel('🔥 Active 2026 win streaks · through Week '+latest,table(['Manager','Consecutive wins'],active.map(x=>tr([managerLink(x.Manager),'<strong>'+x.Value+'</strong>']))));
   }
-  const valueCell=x=>key==="Streak"||["Hundred","OneFifty","TwoHundred"].includes(key)?x.Value:round(x.Value);
+  const valueCell=x=>key==="Streak"||["Hundred","OneFifty","TwoHundred"].includes(key)?x.Value:key==="AvgPoints"?Number(x.Value).toFixed(3):round(x.Value);
   const data=rows.map((x,i)=>tr([i+1,...columns.map((col,j)=>col==="Manager"?managerLink(x.Manager):j===columns.length-1?'<strong>'+valueCell(x)+'</strong>':esc(x[col]??"—"))]));
   return '<h2 class="sectitle">The Receipt Board · All-Time Leaderboards</h2><div class="tabs">'+Object.entries(metrics).map(([k,v])=>'<button class="'+(key===k?'on':'')+'" onclick="leaderMetric=\''+k+'\';render()">'+esc(v)+'</button>').join('')+'</div>'+activePanel+graph+panel(title+' leaderboard',table(['#',...columns],data))+'<p class="muted small">'+subtitle+'. Historical gaps may affect rankings; only scored matchups are counted.</p>';
 };
