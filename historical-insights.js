@@ -51,7 +51,8 @@ function streaks(){
 }
 const oldRefresh=refreshHeadToHead;
 refreshHeadToHead=function(extra=[]){
-  oldRefresh(extra);
+  const carry=ALL_HEAD_TO_HEAD.filter(g=>g.year===2026&&String(g.source||'').includes('Sleeper 2026 snapshot'));
+  oldRefresh([...carry,...extra]);
   if(!D)return;
   // Reconstructed brackets sometimes use Week 17 for NFL Week 16 recaps.
   // Count these as the same meeting, not two rivalry games.
