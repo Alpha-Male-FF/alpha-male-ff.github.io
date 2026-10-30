@@ -7,11 +7,11 @@ const api='https://api.sleeper.app/v1';
 const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const tabular=(heads,rows)=>'<div><table><thead><tr>'+heads.map(x=>'<th>'+safe(x)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(x=>'<td>'+safe(x)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
 async function get(url){const r=await fetch(url);if(!r.ok)throw Error('HTTP '+r.status);return r.json()}
-const rosterWeeks=new Map(),playerManagers=new Map(),trades=[],failed=[];
+const rosterWeeks=new Map(),playerManagers=new Map(),trades=[],draftPicks=[],failed=[];
 let playerNames={},tab='all';
 function name(id){const p=playerNames[id];return p?(p.full_name||[p.first_name,p.last_name].filter(Boolean).join(' ')):String(id)}
 async function season(y,id,currentWeek){
- const [users,rosters]=await Promise.all([get(api+'/league/'+id+'/users'),get(api+'/league/'+id+'/rosters')]);
+ const [users,rosters,drafts]=await Promise.all([get(api+'/league/'+id+'/users'),get(api+'/league/'+id+'/rosters'),get(api+'/league/'+id+'/drafts').catch(()=>[])]);
  const byUser=new Map(users.map(x=>[String(x.user_id),x]));
  const rosterName=new Map(rosters.map(r=>{const u=byUser.get(String(r.owner_id))||{};const raw=u.display_name||u.username||'';return [Number(r.roster_id),people[raw]||people[u.username]||raw]}));
  const rounds=y===2026?Math.max(0,Math.min(18,currentWeek-1)):17;
@@ -19,6 +19,7 @@ async function season(y,id,currentWeek){
  try{return {week:w,matchups:await get(api+'/league/'+id+'/matchups/'+w),tx:await get(api+'/league/'+id+'/transactions/'+w)}}
  catch(e){failed.push(y+' Week '+w+' ('+e.message+')');return null}
  }));
+ for(const draft of drafts){if(!draft.draft_id)continue;const picks=await get(api+'/draft/'+draft.draft_id+'/picks').catch(()=>[]);for(const pick of picks){const manager=rosterName.get(Number(pick.roster_id));if(manager&&pick.player_id)draftPicks.push({year:y,manager,player:pick.player_id})}}
  const seen=new Set();
  for(const data of weeks.filter(Boolean)){
  for(const r of data.matchups){const manager=rosterName.get(Number(r.roster_id));if(!manager)continue;
@@ -35,10 +36,15 @@ function render(){
  const topTrades=[...traded].sort((a,b)=>b[1]-a[1]);
  const pairs=new Map();for(const t of trades)for(let i=0;i<t.parties.length;i++)for(let j=i+1;j<t.parties.length;j++){const k=[t.parties[i],t.parties[j]].sort().join(' | ');pairs.set(k,(pairs.get(k)||0)+1)}
  const topPairs=[...pairs].sort((a,b)=>b[1]-a[1]);
+ const draftCounts=new Map(),draftCombos=new Map();
+ for(const x of draftPicks){draftCounts.set(x.player,(draftCounts.get(x.player)||0)+1);const k=x.manager+'|'+x.player;draftCombos.set(k,(draftCombos.get(k)||0)+1)}
+ const topDrafts=[...draftCounts].sort((a,b)=>b[1]-a[1]);
+ const topDraftCombos=[...draftCombos].sort((a,b)=>b[1]-a[1]);
+ const drafted='<section><h2>Most drafted players · 2024–2026</h2>'+tabular(['Player','Draft selections'],topDrafts.slice(0,45).map(x=>[name(x[0]),x[1]]))+'</section><section><h2>Managers who drafted the same player most</h2>'+tabular(['Manager','Player','Times drafted'],topDraftCombos.slice(0,35).map(x=>[x[0].split('|')[0],name(x[0].split('|')[1]),x[1]]))+'</section>';
  const overview='<section><h2>At a glance</h2><p>'+rows.length.toLocaleString()+' player-team-week appearances · '+playerMap.size+' unique player IDs · '+trades.length+' completed trades</p><p class="muted">A player-week counts a player listed on a team\'s full roster, including bench, once per week. A traded player counts once per completed transaction when identifiable in the transaction adds/drops. Draft-pick-only trades count toward trade partnerships but have no player to credit.</p></section>';
  const players='<section><h2>Who stayed on teams the most?</h2>'+tabular(['Player','Rostered weeks','Managers'],ranked.slice(0,35).map(x=>[name(x.id),x.weeks,x.managers.size]))+'</section><section><h2>Manager × player loyalty</h2>'+tabular(['Manager','Player','Rostered weeks','Seasons'],loyalty.slice(0,70).map(x=>[x.manager,name(x.id),x.weeks,x.years]))+'</section>';
  const history='<section><h2>Most traded players</h2>'+tabular(['Player','Completed trades'],topTrades.slice(0,45).map(x=>[name(x[0]),x[1]]))+'</section><section><h2>Most frequent trade partners</h2>'+tabular(['Managers','Trades'],topPairs.map(x=>[x[0],x[1]]))+'</section><section><h2>Trade ledger</h2>'+tabular(['Season','Week','Managers','Players'],trades.sort((a,b)=>b.year-a.year||b.week-a.week).map(t=>[t.year,t.week,t.parties.join(' ↔ '),t.players.map(name).join(', ')||'Draft picks / FAAB']))+'</section>';
- document.querySelector('#main').innerHTML=overview+(tab==='all'||tab==='players'?players:'')+(tab==='all'||tab==='trades'?history:'');
+ document.querySelector('#main').innerHTML=overview+(tab==='all'||tab==='players'?players+drafted:'')+(tab==='all'||tab==='trades'?history:'');
 }
 document.querySelectorAll('[data-tab]').forEach(btn=>btn.onclick=()=>{tab=btn.dataset.tab;document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b===btn));render()});
 (async()=>{try{
