@@ -8,7 +8,7 @@ function resultsFor(y){return allGames().filter(g=>Number(g.year)===Number(y)).s
 function label(g){return g.round&&g.round!=='NFL archived postseason'?g.round:(isPlayoff(g)?'Postseason':'Regular season')}
 function pctDisplay(n){return n.toFixed(1)+'%'}
 function recordPanel(title,heads,rows){return panel(title,table(heads,rows.length?rows:[tr(['No scored matchups available yet.'])]))}
-function weekPanel(y){const games=resultsFor(y),weeks=[...new Set(games.map(g=>g.week))];let week=window.archiveWeek;if(!weeks.includes(week))week=weeks[0];window.archiveWeek=week;const shown=games.filter(g=>g.week===week);return '<h2 class="sectitle">Week-by-week results · '+y+'</h2><div class="toolbar"><select id="archiveWeekSelect" onchange="window.archiveWeek=Number(this.value);render()">'+weeks.map(w=>'<option value="'+w+'" '+(w===week?'selected':'')+'>Week '+w+'</option>').join('')+'</select></div>'+recordPanel('Week '+(week||'—')+' · '+shown.length+' recovered matchups',['Matchup','Score','Winner','Phase'],shown.map(g=>tr([managerLink(g.a)+' vs '+managerLink(g.b),fmt(g.scoreA)+' – '+fmt(g.scoreB),g.winner?managerLink(g.winner):'Tie',esc(label(g))])))+'<p class="muted small">Week scores are from recovered NFL recap files and Sleeper matchup API data. Missing archived weeks are omitted, not treated as losses. Postseason placement games may not have an independently verified bracket designation.</p>'}
+function weekPanel(y){const games=resultsFor(y),weeks=[...new Set(games.map(g=>g.week))];let week=window.archiveWeek;if(!weeks.includes(week))week=weeks[0];window.archiveWeek=week;const shown=games.filter(g=>g.week===week);return '<h2 class="sectitle">Week-by-week results · '+y+'</h2><div class="toolbar"><select id="archiveWeekSelect" onchange="window.archiveWeek=Number(this.value);render()">'+weeks.map(w=>'<option value="'+w+'" '+(w===week?'selected':'')+'>Week '+w+'</option>').join('')+'</select></div>'+recordPanel('Week '+(week||'—')+' · '+shown.length+' historical matchups',['Matchup','Score','Winner','Phase'],shown.map(g=>tr([managerLink(g.a)+' vs '+managerLink(g.b),fmt(g.scoreA)+' – '+fmt(g.scoreB),g.winner?managerLink(g.winner):'Tie',esc(label(g))])))+'<p class="muted small">Week scores are from historical NFL recap files and Sleeper matchup API data. Missing archived weeks are omitted, not treated as losses. Postseason placement games may not have an independently verified bracket designation.</p>'}
 function scoredWeeks(){return allGames().flatMap(g=>[{name:g.a,opponent:g.b,points:Number(g.scoreA),opp:Number(g.scoreB),year:g.year,week:g.week,post:isPlayoff(g)},{name:g.b,opponent:g.a,points:Number(g.scoreB),opp:Number(g.scoreA),year:g.year,week:g.week,post:isPlayoff(g)}])}
 function streaks(){const by={};for(const x of scoredWeeks().filter(g=>!g.post))(by[x.name]??=[]).push(x);const out=[];for(const [name,arr] of Object.entries(by)){arr.sort((a,b)=>a.year-b.year||a.week-b.week);let current=0,start=null,previous=null;for(const g of arr){const continuous=previous&&((g.year===previous.year&&g.week===previous.week+1)||(g.year===previous.year+1&&g.week===1));if(!continuous)current=0;if(g.points>g.opp){if(!current)start={year:g.year,week:g.week};current++;out.push({name,n:current,start,end:{year:g.year,week:g.week}})}else current=0;previous=g}}return out.sort((a,b)=>b.n-a.n)}
 const oldRefresh=refreshHeadToHead;
@@ -23,58 +23,46 @@ refreshHeadToHead=function(extra=[]){
   for(const m of D.matches){const hit=indexed.get(key(m));if(hit&&m.scoreA==null&&(!m.winner||m.winner===hit.winner)){m.scoreA=m.a===hit.a?hit.scoreA:hit.scoreB;m.scoreB=m.b===hit.b?hit.scoreB:hit.scoreA;m.source=hit.source||'Recovered matchup';if(!m.winner)m.winner=hit.winner}}
   const existing=new Set(D.matches.map(key));
   for(const g of allGames()){if(Number(g.year)>2023||!isPlayoff(g)||existing.has(key(g))||D.matches.some(m=>m.year===g.year&&m.winner===g.winner&&Math.abs(m.week-g.week)<=1&&[m.a,m.b].sort().join('|')===[g.a,g.b].sort().join('|')))continue;
-    D.matches.push({year:g.year,week:g.week,round:'Recovered postseason matchup',bracket:'Recovered',a:g.a,b:g.b,teamA:g.teamA||'',teamB:g.teamB||'',winner:g.winner,scoreA:g.scoreA,scoreB:g.scoreB,source:'Recovered recap; bracket classification unverified'});existing.add(key(g))}
+    D.matches.push({year:g.year,week:g.week,round:'Postseason matchup',bracket:'Recovered',a:g.a,b:g.b,teamA:g.teamA||'',teamB:g.teamB||'',winner:g.winner,scoreA:g.scoreA,scoreB:g.scoreB,source:'Archived recap; bracket classification unverified'});existing.add(key(g))}
   if(activeManager&&page==='managers')showManager(activeManager);
   else if(page==='playoffs'||page==='seasons'||page==='leaders')render();
 };
 const origSeasons=seasons;
 seasons=function(){return origSeasons()+((Number(seasonYear)<=2025)?weekPanel(seasonYear):'')};
 const origLeaders=leaders;
+Object.assign(metrics,{
+  HighScore:"Single-week scoring",Blowout:"Largest blowouts",Streak:"Win streaks",
+  Close:"Closest games",LowScore:"Lowest week scores",Hundred:"100+ point weeks",
+  OneFifty:"150+ point weeks",TwoHundred:"200+ point weeks",
+  AvgPoints:"Average weekly score",Combined:"Combined matchup points"
+});
 leaders=function(){
-  const sw=scoredWeeks(),games=allGames(),win=streaks(),top=[...sw].sort((a,b)=>b.points-a.points).slice(0,20),low=[...sw].sort((a,b)=>a.points-b.points).slice(0,15),
-  margins=[...games].map(g=>({g,margin:Math.abs(g.scoreA-g.scoreB),high:g.scoreA>=g.scoreB?g.a:g.b,low:g.scoreA>=g.scoreB?g.b:g.a})).sort((a,b)=>b.margin-a.margin).slice(0,20);
-  const close=[...games].map(g=>({g,margin:Math.abs(g.scoreA-g.scoreB)})).sort((a,b)=>a.margin-b.margin).slice(0,15);
-  const perYear={};for(const g of sw){const p=perYear[g.year]??=[];p.push(g.points)}
-  const yearAvg=Object.entries(perYear).sort((a,b)=>Number(a[0])-Number(b[0]));
-  const records='<h2 class="sectitle">Recovered history · single-week records</h2><p class="muted small">2015–2025; regular season plus recovered postseason. Ranked only from scored games. NFL archive gaps affect all-time completeness. Streaks are regular-season only and break at missing weeks; no wins are assumed.</p>'
-  +recordPanel('🔥 Highest single-week team scores',['Manager','Opponent','Season','Week','Points','Phase'],top.map(g=>tr([managerLink(g.name),managerLink(g.opponent),g.year,g.week,'<strong>'+fmt(g.points)+'</strong>',g.post?'Postseason':'Regular'])))
-  +recordPanel('💥 Biggest recovered blowouts',['Winner','Loser','Season','Week','Score','Margin'],margins.map(x=>tr([managerLink(x.high),managerLink(x.low),x.g.year,x.g.week,fmt(Math.max(x.g.scoreA,x.g.scoreB))+' – '+fmt(Math.min(x.g.scoreA,x.g.scoreB)),'<strong>'+fmt(x.margin)+'</strong>'])))
-  +recordPanel('🏆 Longest consecutive regular-season win streaks · recovered',['Manager','Wins','From','Through'],win.filter((g,i)=>win.findIndex(x=>x.name===g.name)===i).slice(0,20).map(g=>tr([managerLink(g.name),'<strong>'+g.n+'</strong>',g.start.year+' W'+g.start.week,g.end.year+' W'+g.end.week])))
-  +recordPanel('😬 Lowest single-week team scores',['Manager','Opponent','Season','Week','Points'],low.map(g=>tr([managerLink(g.name),managerLink(g.opponent),g.year,g.week,fmt(g.points)])))
-  +recordPanel('🤏 Closest recovered games',['Matchup','Year','Week','Score','Difference'],close.map(x=>tr([managerLink(x.g.a)+' vs '+managerLink(x.g.b),x.g.year,x.g.week,fmt(x.g.scoreA)+' – '+fmt(x.g.scoreB),fmt(x.margin)])))
-  +recordPanel('📈 Average points per scored team-week',['Season','Scored team-weeks','Average points'],yearAvg.map(([y,v])=>tr([y,v.length,fmt(v.reduce((a,b)=>a+b,0)/v.length)])));
-  const combined=[...games].map(g=>({g,total:Number(g.scoreA)+Number(g.scoreB)})).sort((a,b)=>b.total-a.total).slice(0,20);
-  const thresholds={};for(const g of sw){const row=thresholds[g.name]??={name:g.name,over100:0,over150:0,over200:0,scored:0,points:0};row.scored++;row.points+=g.points;if(g.points>=100)row.over100++;if(g.points>=150)row.over150++;if(g.points>=200)row.over200++;}
-  const counts=Object.values(thresholds);
-  const bonus=recordPanel('🎆 Highest-scoring combined matchups',['Team A','Team B','Year','Week','Combined','Score'],combined.map(x=>tr([managerLink(x.g.a),managerLink(x.g.b),x.g.year,x.g.week,'<strong>'+fmt(x.total)+'</strong>',fmt(x.g.scoreA)+' – '+fmt(x.g.scoreB)])))
-    +recordPanel('💯 Most 100+ point games · recovered',['Manager','100+','150+','200+','Scored weeks'],[...counts].sort((a,b)=>b.over100-a.over100).map(g=>tr([managerLink(g.name),g.over100,g.over150,g.over200,g.scored])))
-    +recordPanel('🚀 Most 150+ point games · recovered',['Manager','150+','200+','Scored weeks'],[...counts].sort((a,b)=>b.over150-a.over150).map(g=>tr([managerLink(g.name),'<strong>'+g.over150+'</strong>',g.over200,g.scored])))
-    +recordPanel('📊 Best average points per recovered week',['Manager','Scored team-weeks','Average points'],[...counts].filter(g=>g.scored>=10).sort((a,b)=>b.points/b.scored-a.points/a.scored).map(g=>tr([managerLink(g.name),g.scored,fmt(g.points/g.scored)])));
-  const categories=[
-    ['all','All recovered records'],
-    ['scoring','Highest / lowest scores'],
-    ['blowouts','Blowouts / close games'],
-    ['streaks','Win streaks'],
-    ['frequency','100+ / 150+ / 200+ weeks'],
-    ['averages','Scoring averages'],
-    ['combined','Highest combined scores']
-  ];
-  const selected=window.receiptCategory||'all';
-  const blocks=[
-    {kind:'scoring',html:recordPanel('🔥 Highest single-week team scores',['Manager','Opponent','Season','Week','Points','Phase'],top.map(g=>tr([managerLink(g.name),managerLink(g.opponent),g.year,g.week,'<strong>'+fmt(g.points)+'</strong>',g.post?'Postseason':'Regular'])))},
-    {kind:'blowouts',html:recordPanel('💥 Biggest recovered blowouts',['Winner','Loser','Season','Week','Score','Margin'],margins.map(x=>tr([managerLink(x.high),managerLink(x.low),x.g.year,x.g.week,fmt(Math.max(x.g.scoreA,x.g.scoreB))+' – '+fmt(Math.min(x.g.scoreA,x.g.scoreB)),'<strong>'+fmt(x.margin)+'</strong>'])))},
-    {kind:'streaks',html:recordPanel('🏆 Longest consecutive regular-season win streaks · recovered',['Manager','Wins','From','Through'],win.filter((g,i)=>win.findIndex(x=>x.name===g.name)===i).slice(0,20).map(g=>tr([managerLink(g.name),'<strong>'+g.n+'</strong>',g.start.year+' W'+g.start.week,g.end.year+' W'+g.end.week])))},
-    {kind:'scoring',html:recordPanel('😬 Lowest single-week team scores',['Manager','Opponent','Season','Week','Points'],low.map(g=>tr([managerLink(g.name),managerLink(g.opponent),g.year,g.week,fmt(g.points)])))},
-    {kind:'blowouts',html:recordPanel('🤏 Closest recovered games',['Matchup','Year','Week','Score','Difference'],close.map(x=>tr([managerLink(x.g.a)+' vs '+managerLink(x.g.b),x.g.year,x.g.week,fmt(x.g.scoreA)+' – '+fmt(x.g.scoreB),fmt(x.margin)])))},
-    {kind:'averages',html:recordPanel('📈 Average points per scored team-week',['Season','Scored team-weeks','Average points'],yearAvg.map(([y,v])=>tr([y,v.length,fmt(v.reduce((a,b)=>a+b,0)/v.length)])))},
-    {kind:'combined',html:recordPanel('🎆 Highest-scoring combined matchups',['Team A','Team B','Year','Week','Combined','Score'],combined.map(x=>tr([managerLink(x.g.a),managerLink(x.g.b),x.g.year,x.g.week,'<strong>'+fmt(x.total)+'</strong>',fmt(x.g.scoreA)+' – '+fmt(x.g.scoreB)])))},
-    {kind:'frequency',html:recordPanel('💯 Most 100+ point games · recovered',['Manager','100+','150+','200+','Scored weeks'],[...counts].sort((a,b)=>b.over100-a.over100).map(g=>tr([managerLink(g.name),g.over100,g.over150,g.over200,g.scored])))},
-    {kind:'frequency',html:recordPanel('🚀 Most 150+ point games · recovered',['Manager','150+','200+','Scored weeks'],[...counts].sort((a,b)=>b.over150-a.over150).map(g=>tr([managerLink(g.name),'<strong>'+g.over150+'</strong>',g.over200,g.scored])))},
-    {kind:'averages',html:recordPanel('📊 Best average points per recovered week',['Manager','Scored team-weeks','Average points'],[...counts].filter(g=>g.scored>=10).sort((a,b)=>b.points/b.scored-a.points/a.scored).map(g=>tr([managerLink(g.name),g.scored,fmt(g.points/g.scored)])))}
-  ];
-  const menu='<h2 class="sectitle">Recovered history · Record Explorer</h2><p class="muted small">Select a record category to filter this section. 2015–2025 recovered scores; gaps remain and streaks stop at missing weeks.</p><div class="toolbar"><select aria-label="Record category" onchange="window.receiptCategory=this.value;render()">'+categories.map(([id,title])=>'<option value="'+id+'" '+(selected===id?'selected':'')+'>'+title+'</option>').join('')+'</select></div>';
-  return origLeaders()+menu+blocks.filter(b=>selected==='all'||b.kind===selected).map(b=>b.html).join('');
-
+  const key=leaderMetric;
+  if(!["HighScore","Blowout","Streak","Close","LowScore","Hundred","OneFifty","TwoHundred","AvgPoints","Combined"].includes(key))return origLeaders();
+  const games=allGames(),sw=scoredWeeks(),round=n=>Number(n||0).toFixed(2);
+  let rows=[],title=metrics[key],subtitle="2015–2025 · regular season and playoffs",columns=[];
+  if(key==="HighScore"||key==="LowScore"){
+    rows=[...sw].sort((a,b)=>key==="HighScore"?b.points-a.points:a.points-b.points).slice(0,30).map(x=>({Manager:x.name,Opponent:x.opponent,Year:x.year,Week:x.week,Value:x.points}));
+    columns=["Manager","Opponent","Year","Week","Points"];
+  }else if(key==="Blowout"||key==="Close"||key==="Combined"){
+    rows=games.map(g=>({Manager:g.scoreA>=g.scoreB?g.a:g.b,Opponent:g.scoreA>=g.scoreB?g.b:g.a,Year:g.year,Week:g.week,Score:round(g.scoreA)+" – "+round(g.scoreB),Value:key==="Combined"?Number(g.scoreA)+Number(g.scoreB):Math.abs(g.scoreA-g.scoreB)}))
+      .sort((a,b)=>key==="Close"?a.Value-b.Value:b.Value-a.Value).slice(0,30);
+    columns=["Manager","Opponent","Year","Week","Score",key==="Blowout"?"Margin":key==="Close"?"Difference":"Combined"];
+  }else if(key==="Streak"){
+    rows=streaks().filter((x,i,a)=>a.findIndex(z=>z.name===x.name)===i).map(x=>({Manager:x.name,From:x.start.year+" W"+x.start.week,Through:x.end.year+" W"+x.end.week,Value:x.n}));
+    columns=["Manager","From","Through","Wins"];
+    subtitle="Regular season only · missing weeks interrupt streaks";
+  }else {
+    const per={};
+    for(const g of sw){const x=per[g.name]??={Manager:g.name,Weeks:0,Points:0,Hundred:0,OneFifty:0,TwoHundred:0};x.Weeks++;x.Points+=g.points;if(g.points>=100)x.Hundred++;if(g.points>=150)x.OneFifty++;if(g.points>=200)x.TwoHundred++}
+    rows=Object.values(per).map(x=>({...x,Value:key==="AvgPoints"?x.Points/x.Weeks:x[key]})).sort((a,b)=>b.Value-a.Value);
+    columns=["Manager","Weeks",key==="AvgPoints"?"Avg points":"Milestone weeks"];
+  }
+  const barItems=rows.slice(0,10).map(x=>({...x,Manager:x.Manager+(x.Year?" · "+x.Year+" W"+x.Week:"")}));
+  const graph=key==="Close"?barChart(title+" · smallest margins",barItems,x=>Math.max(0.01,5-x.Value),x=>round(x.Value)):barChart(title+" · top 10",barItems,x=>x.Value,x=>key==="Streak"||["Hundred","OneFifty","TwoHundred"].includes(key)?x.Value:round(x.Value));
+  const valueCell=x=>key==="Streak"||["Hundred","OneFifty","TwoHundred"].includes(key)?x.Value:round(x.Value);
+  const data=rows.map((x,i)=>tr([i+1,...columns.map((col,j)=>col==="Manager"?managerLink(x.Manager):j===columns.length-1?'<strong>'+valueCell(x)+'</strong>':esc(x[col]??"—"))]));
+  return '<h2 class="sectitle">The Receipt Board · All-Time Leaderboards</h2><div class="tabs">'+Object.entries(metrics).map(([k,v])=>'<button class="'+(key===k?'on':'')+'" onclick="leaderMetric=\''+k+'\';render()">'+esc(v)+'</button>').join('')+'</div>'+graph+panel(title+' leaderboard',table(['#',...columns],data))+'<p class="muted small">'+subtitle+'. Historical gaps may affect rankings; only scored matchups are counted.</p>';
 };
 const origPlayoffs=playoffs;
 playoffs=function(){
@@ -82,11 +70,11 @@ playoffs=function(){
  if(y<=2023)html=html.replace('</select></div><div class="banner"','<option '+(playoffBracket==='Recovered'?'selected':'')+'>Recovered</option></select></div><div class="banner"');
  if(y>2023)return html;
  const scored=resultsFor(y).filter(isPlayoff);
- const scoreboard=scored.length?recordPanel('Recovered postseason scoreboard · '+scored.length+' scored games',['Week','Matchup','Score','Winner'],scored.map(g=>tr([g.week,managerLink(g.a)+' vs '+managerLink(g.b),fmt(g.scoreA)+' – '+fmt(g.scoreB),g.winner?managerLink(g.winner):'Tie'])))+'<p class="muted small">Scoreboard includes all archived postseason matchups. Bracket designation may be uncertain for some recovered placement or consolation games.</p>':'<p class="muted small">No recovered postseason scores for this season.</p>';
+ const scoreboard=scored.length?recordPanel('Postseason scoreboard · '+scored.length+' scored games',['Week','Matchup','Score','Winner'],scored.map(g=>tr([g.week,managerLink(g.a)+' vs '+managerLink(g.b),fmt(g.scoreA)+' – '+fmt(g.scoreB),g.winner?managerLink(g.winner):'Tie'])))+'<p class="muted small">Scoreboard includes all archived postseason matchups. Bracket designation may be uncertain for some historical placement or consolation games.</p>':'<p class="muted small">No postseason scores for this season.</p>';
  const consolation=resultsFor(y).filter(g=>isPlayoff(g)&&!D.matches.some(m=>m.year===g.year&&m.week===g.week&&key(m)===key(g)&&m.bracket==='Championship'));
- if(playoffBracket==='Consolation'&&!consolation.length)return html.replace('Consolation outcomes are not available for ESPN seasons 2015–2023.','No independently identified consolation bracket matchups for this season; recovered postseason games (including possible placement games) appear in the scoreboard below.')+scoreboard;
- const replaced=html.replace('2015–2023 championship bracket outcomes are reconstructed from original playoff seeds, league bracket rules, and final placements; game scores were not supplied.','2015–2023 championship pairings are reconstructed from seeds and placements; matching scores are now drawn from archived NFL recaps wherever recovered. Recovered consolation and placement matches have not been independently verified by bracket.');
+ if(playoffBracket==='Consolation'&&!consolation.length)return html.replace('Consolation outcomes are not available for ESPN seasons 2015–2023.','No independently identified consolation bracket matchups for this season; postseason games (including possible placement games) appear in the scoreboard below.')+scoreboard;
+ const replaced=html.replace('2015–2023 championship bracket outcomes are reconstructed from original playoff seeds, league bracket rules, and final placements; game scores were not supplied.','2015–2023 championship pairings are reconstructed from seeds and placements; matching scores are now drawn from archived NFL recaps wherever historical. Recovered consolation and placement matches have not been independently verified by bracket.');
  return replaced+scoreboard;
 };
-window.recoveredRecordBook={get allGames(){return allGames()},get seasonCounts(){return Object.fromEntries([...new Set(allGames().map(g=>g.year))].map(y=>[y,resultsFor(y).length]))}};
+window.historicalRecordBook={get allGames(){return allGames()},get seasonCounts(){return Object.fromEntries([...new Set(allGames().map(g=>g.year))].map(y=>[y,resultsFor(y).length]))}};
 })();
