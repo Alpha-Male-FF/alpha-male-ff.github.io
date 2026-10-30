@@ -39,7 +39,38 @@ leaders=function(){
   +recordPanel('😬 Lowest single-week team scores',['Manager','Opponent','Season','Week','Points'],low.map(g=>tr([managerLink(g.name),managerLink(g.opponent),g.year,g.week,fmt(g.points)])))
   +recordPanel('🤏 Closest recovered games',['Matchup','Year','Week','Score','Difference'],close.map(x=>tr([managerLink(x.g.a)+' vs '+managerLink(x.g.b),x.g.year,x.g.week,fmt(x.g.scoreA)+' – '+fmt(x.g.scoreB),fmt(x.margin)])))
   +recordPanel('📈 Average points per scored team-week',['Season','Scored team-weeks','Average points'],yearAvg.map(([y,v])=>tr([y,v.length,fmt(v.reduce((a,b)=>a+b,0)/v.length)])));
-  return origLeaders()+records;
+  const combined=[...games].map(g=>({g,total:Number(g.scoreA)+Number(g.scoreB)})).sort((a,b)=>b.total-a.total).slice(0,20);
+  const thresholds={};for(const g of sw){const row=thresholds[g.name]??={name:g.name,over100:0,over150:0,over200:0,scored:0,points:0};row.scored++;row.points+=g.points;if(g.points>=100)row.over100++;if(g.points>=150)row.over150++;if(g.points>=200)row.over200++;}
+  const counts=Object.values(thresholds);
+  const bonus=recordPanel('🎆 Highest-scoring combined matchups',['Team A','Team B','Year','Week','Combined','Score'],combined.map(x=>tr([managerLink(x.g.a),managerLink(x.g.b),x.g.year,x.g.week,'<strong>'+fmt(x.total)+'</strong>',fmt(x.g.scoreA)+' – '+fmt(x.g.scoreB)])))
+    +recordPanel('💯 Most 100+ point games · recovered',['Manager','100+','150+','200+','Scored weeks'],[...counts].sort((a,b)=>b.over100-a.over100).map(g=>tr([managerLink(g.name),g.over100,g.over150,g.over200,g.scored])))
+    +recordPanel('🚀 Most 150+ point games · recovered',['Manager','150+','200+','Scored weeks'],[...counts].sort((a,b)=>b.over150-a.over150).map(g=>tr([managerLink(g.name),'<strong>'+g.over150+'</strong>',g.over200,g.scored])))
+    +recordPanel('📊 Best average points per recovered week',['Manager','Scored team-weeks','Average points'],[...counts].filter(g=>g.scored>=10).sort((a,b)=>b.points/b.scored-a.points/a.scored).map(g=>tr([managerLink(g.name),g.scored,fmt(g.points/g.scored)])));
+  const categories=[
+    ['all','All recovered records'],
+    ['scoring','Highest / lowest scores'],
+    ['blowouts','Blowouts / close games'],
+    ['streaks','Win streaks'],
+    ['frequency','100+ / 150+ / 200+ weeks'],
+    ['averages','Scoring averages'],
+    ['combined','Highest combined scores']
+  ];
+  const selected=window.receiptCategory||'all';
+  const blocks=[
+    {kind:'scoring',html:recordPanel('🔥 Highest single-week team scores',['Manager','Opponent','Season','Week','Points','Phase'],top.map(g=>tr([managerLink(g.name),managerLink(g.opponent),g.year,g.week,'<strong>'+fmt(g.points)+'</strong>',g.post?'Postseason':'Regular'])))},
+    {kind:'blowouts',html:recordPanel('💥 Biggest recovered blowouts',['Winner','Loser','Season','Week','Score','Margin'],margins.map(x=>tr([managerLink(x.high),managerLink(x.low),x.g.year,x.g.week,fmt(Math.max(x.g.scoreA,x.g.scoreB))+' – '+fmt(Math.min(x.g.scoreA,x.g.scoreB)),'<strong>'+fmt(x.margin)+'</strong>'])))},
+    {kind:'streaks',html:recordPanel('🏆 Longest consecutive regular-season win streaks · recovered',['Manager','Wins','From','Through'],win.filter((g,i)=>win.findIndex(x=>x.name===g.name)===i).slice(0,20).map(g=>tr([managerLink(g.name),'<strong>'+g.n+'</strong>',g.start.year+' W'+g.start.week,g.end.year+' W'+g.end.week])))},
+    {kind:'scoring',html:recordPanel('😬 Lowest single-week team scores',['Manager','Opponent','Season','Week','Points'],low.map(g=>tr([managerLink(g.name),managerLink(g.opponent),g.year,g.week,fmt(g.points)])))},
+    {kind:'blowouts',html:recordPanel('🤏 Closest recovered games',['Matchup','Year','Week','Score','Difference'],close.map(x=>tr([managerLink(x.g.a)+' vs '+managerLink(x.g.b),x.g.year,x.g.week,fmt(x.g.scoreA)+' – '+fmt(x.g.scoreB),fmt(x.margin)])))},
+    {kind:'averages',html:recordPanel('📈 Average points per scored team-week',['Season','Scored team-weeks','Average points'],yearAvg.map(([y,v])=>tr([y,v.length,fmt(v.reduce((a,b)=>a+b,0)/v.length)])))},
+    {kind:'combined',html:recordPanel('🎆 Highest-scoring combined matchups',['Team A','Team B','Year','Week','Combined','Score'],combined.map(x=>tr([managerLink(x.g.a),managerLink(x.g.b),x.g.year,x.g.week,'<strong>'+fmt(x.total)+'</strong>',fmt(x.g.scoreA)+' – '+fmt(x.g.scoreB)])))},
+    {kind:'frequency',html:recordPanel('💯 Most 100+ point games · recovered',['Manager','100+','150+','200+','Scored weeks'],[...counts].sort((a,b)=>b.over100-a.over100).map(g=>tr([managerLink(g.name),g.over100,g.over150,g.over200,g.scored])))},
+    {kind:'frequency',html:recordPanel('🚀 Most 150+ point games · recovered',['Manager','150+','200+','Scored weeks'],[...counts].sort((a,b)=>b.over150-a.over150).map(g=>tr([managerLink(g.name),'<strong>'+g.over150+'</strong>',g.over200,g.scored])))},
+    {kind:'averages',html:recordPanel('📊 Best average points per recovered week',['Manager','Scored team-weeks','Average points'],[...counts].filter(g=>g.scored>=10).sort((a,b)=>b.points/b.scored-a.points/a.scored).map(g=>tr([managerLink(g.name),g.scored,fmt(g.points/g.scored)])))}
+  ];
+  const menu='<h2 class="sectitle">Recovered history · Record Explorer</h2><p class="muted small">Select a record category to filter this section. 2015–2025 recovered scores; gaps remain and streaks stop at missing weeks.</p><div class="toolbar"><select aria-label="Record category" onchange="window.receiptCategory=this.value;render()">'+categories.map(([id,title])=>'<option value="'+id+'" '+(selected===id?'selected':'')+'>'+title+'</option>').join('')+'</select></div>';
+  return origLeaders()+menu+blocks.filter(b=>selected==='all'||b.kind===selected).map(b=>b.html).join('');
+
 };
 const origPlayoffs=playoffs;
 playoffs=function(){
