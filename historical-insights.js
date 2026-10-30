@@ -46,10 +46,12 @@ playoffs=function(){
  const y=Number(playoffYear);let html=origPlayoffs();
  if(y<=2023)html=html.replace('</select></div><div class="banner"','<option '+(playoffBracket==='Recovered'?'selected':'')+'>Recovered</option></select></div><div class="banner"');
  if(y>2023)return html;
+ const scored=resultsFor(y).filter(isPlayoff);
+ const scoreboard=scored.length?recordPanel('Recovered postseason scoreboard · '+scored.length+' scored games',['Week','Matchup','Score','Winner'],scored.map(g=>tr([g.week,managerLink(g.a)+' vs '+managerLink(g.b),fmt(g.scoreA)+' – '+fmt(g.scoreB),g.winner?managerLink(g.winner):'Tie'])))+'<p class="muted small">Scoreboard includes all archived postseason matchups. Bracket designation may be uncertain for some recovered placement or consolation games.</p>':'<p class="muted small">No recovered postseason scores for this season.</p>';
  const consolation=resultsFor(y).filter(g=>isPlayoff(g)&&!D.matches.some(m=>m.year===g.year&&m.week===g.week&&key(m)===key(g)&&m.bracket==='Championship'));
- if(playoffBracket==='Consolation'&&!consolation.length)return html.replace('Consolation outcomes are not available for ESPN seasons 2015–2023.','No additional recovered postseason games for this season.');
+ if(playoffBracket==='Consolation'&&!consolation.length)return html.replace('Consolation outcomes are not available for ESPN seasons 2015–2023.','No independently identified consolation bracket matchups for this season; recovered postseason games (including possible placement games) appear in the scoreboard below.')+scoreboard;
  const replaced=html.replace('2015–2023 championship bracket outcomes are reconstructed from original playoff seeds, league bracket rules, and final placements; game scores were not supplied.','2015–2023 championship pairings are reconstructed from seeds and placements; matching scores are now drawn from archived NFL recaps wherever recovered. Recovered consolation and placement matches have not been independently verified by bracket.');
- return replaced;
+ return replaced+scoreboard;
 };
 window.recoveredRecordBook={get allGames(){return allGames()},get seasonCounts(){return Object.fromEntries([...new Set(allGames().map(g=>g.year))].map(y=>[y,resultsFor(y).length]))}};
 })();
