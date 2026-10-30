@@ -19,7 +19,7 @@ async function season(y,id,currentWeek){
  try{return {week:w,matchups:await get(api+'/league/'+id+'/matchups/'+w),tx:await get(api+'/league/'+id+'/transactions/'+w)}}
  catch(e){failed.push(y+' Week '+w+' ('+e.message+')');return null}
  }));
- for(const draft of drafts){if(!draft.draft_id)continue;const picks=await get(api+'/draft/'+draft.draft_id+'/picks').catch(()=>[]);for(const pick of picks){const manager=rosterName.get(Number(pick.roster_id));if(manager&&pick.player_id)draftPicks.push({year:y,manager,player:pick.player_id})}}
+ for(const draft of drafts){if(!draft.draft_id)continue;const picks=await get(api+'/draft/'+draft.draft_id+'/picks').catch(()=>[]);for(const pick of picks){const manager=rosterName.get(Number(pick.roster_id));if(manager&&pick.player_id)Number(pick.round)===1&&draftPicks.push({year:y,manager,player:pick.player_id})}}
  const seen=new Set();
  for(const data of weeks.filter(Boolean)){
  for(const r of data.matchups){const manager=rosterName.get(Number(r.roster_id));if(!manager)continue;
@@ -40,7 +40,7 @@ function render(){
  for(const x of draftPicks){draftCounts.set(x.player,(draftCounts.get(x.player)||0)+1);const k=x.manager+'|'+x.player;draftCombos.set(k,(draftCombos.get(k)||0)+1)}
  const topDrafts=[...draftCounts].sort((a,b)=>b[1]-a[1]);
  const topDraftCombos=[...draftCombos].sort((a,b)=>b[1]-a[1]);
- const drafted='<section><h2>Most drafted players · 2024–2026</h2>'+tabular(['Player','Draft selections'],topDrafts.slice(0,45).map(x=>[name(x[0]),x[1]]))+'</section><section><h2>Managers who drafted the same player most</h2>'+tabular(['Manager','Player','Times drafted'],topDraftCombos.slice(0,35).map(x=>[x[0].split('|')[0],name(x[0].split('|')[1]),x[1]]))+'</section>';
+ const drafted='<section><h2>Most first-round draft picks · 2024–2026</h2>'+tabular(['Player','Draft selections'],topDrafts.slice(0,45).map(x=>[name(x[0]),x[1]]))+'</section><section><h2>Repeat first-round picks by manager</h2>'+tabular(['Manager','Player','Times drafted'],topDraftCombos.slice(0,35).map(x=>[x[0].split('|')[0],name(x[0].split('|')[1]),x[1]]))+'</section>';
  const overview='<section><h2>At a glance</h2><p>'+rows.length.toLocaleString()+' player-team-week appearances · '+playerMap.size+' unique player IDs · '+trades.length+' completed trades</p><p class="muted">A player-week counts a player listed on a team\'s full roster, including bench, once per week. A traded player counts once per completed transaction when identifiable in the transaction adds/drops. Draft-pick-only trades count toward trade partnerships but have no player to credit.</p></section>';
  const players='<section><h2>Who stayed on teams the most?</h2>'+tabular(['Player','Rostered weeks','Managers'],ranked.slice(0,35).map(x=>[name(x.id),x.weeks,x.managers.size]))+'</section><section><h2>Manager × player loyalty</h2>'+tabular(['Manager','Player','Rostered weeks','Seasons'],loyalty.slice(0,70).map(x=>[x.manager,name(x.id),x.weeks,x.years]))+'</section>';
  const history='<section><h2>Most traded players</h2>'+tabular(['Player','Completed trades'],topTrades.slice(0,45).map(x=>[name(x[0]),x[1]]))+'</section><section><h2>Most frequent trade partners</h2>'+tabular(['Managers','Trades'],topPairs.map(x=>[x[0],x[1]]))+'</section><section><h2>Trade ledger</h2>'+tabular(['Season','Week','Managers','Players'],trades.sort((a,b)=>b.year-a.year||b.week-a.week).map(t=>[t.year,t.week,t.parties.join(' ↔ '),t.players.map(name).join(', ')||'Draft picks / FAAB']))+'</section>';
