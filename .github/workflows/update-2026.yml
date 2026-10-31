@@ -1,4 +1,4 @@
-name: Refresh Sleeper 2026 standings and AMFL power rankings
+name: Refresh Sleeper 2026 standings
 
 on:
   schedule:
@@ -27,17 +27,9 @@ jobs:
         run: |
           python scripts/sync_sleeper_2026.py
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Calculate AMFL Power Rankings
-        run: node scripts/sync_power_rankings.mjs
-
       - name: Commit and push changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data-2026.json power-rankings.json
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Update Sleeper standings and AMFL power rankings [skip ci]" && git push)
+          git add data-2026.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update 2026 Sleeper data [skip ci]" && git push)
