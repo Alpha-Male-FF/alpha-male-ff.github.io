@@ -9,7 +9,17 @@
  a{color:#e6b75f!important}
  button.active{background:#c82735!important;color:#fff!important}
  nav{background:#102b57!important;border-bottom:2px solid #c82735!important}
- </style></head><body><div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><a href="/" aria-label="AMFL Home"><img src="/assets/amfl-shield.png" onerror="this.onerror=null;this.src='/assets/amfl-shield.svg'" alt="AMFL" style="width:54px;height:54px;object-fit:contain"></a><strong style="font-size:20px;letter-spacing:2px;color:#e3b657">AMFL</strong></div><header><a href="/">← Alpha Male FF</a><h1>Player & Trade History</h1><p class="muted">Sleeper seasons 2024–2026 · weekly team rosters, trade partners and most-traded players</p><p class="notice" id="status">Loading weekly rosters and transactions…</p><nav><button class="active" data-tab="all">Overview</button><button data-tab="players">Player loyalty</button><button data-tab="trades">Trades</button></nav></header><main id="main"></main><script>
+ </style><style>
+/* AMFL red-white-blue finishing theme */
+:root{--gold:#dcb458;--blue:#2664bd;--red:#c82735;--text:#f6f8fd}
+a, a:visited{color:#a7cbff}
+a:hover{color:#fff}
+button.active,.active{background-color:#c82735;color:#fff}
+th{color:#edf3fe!important}
+tbody tr:hover{background:rgba(42,105,190,.19)}
+header strong{color:#fff}
+section h2{color:#f4f7fc!important}
+</style></head><body><div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><a href="/" aria-label="AMFL Home"><img src="/assets/amfl-shield.png" onerror="this.onerror=null;this.src='/assets/amfl-shield.svg'" alt="AMFL" style="width:54px;height:54px;object-fit:contain"></a><strong style="font-size:20px;letter-spacing:2px;color:#e3b657">AMFL</strong></div><header><a href="/">← Alpha Male FF</a><h1>Player & Trade History</h1><p class="muted">Sleeper seasons 2024–2026 · weekly team rosters, trade partners and most-traded players</p><p class="notice" id="status">Loading weekly rosters and transactions…</p><nav><button class="active" data-tab="all">Overview</button><button data-tab="players">Player loyalty</button><button data-tab="trades">Trades</button></nav></header><main id="main"></main><script>
 const leagues={2024:'1137184732384940032',2025:'1257118106497593344',2026:'1386887172610600960'};
 const people={'G-wizz':'Mike',jlong11:'Justin',ryan14cook:'Ryan',ajgardner307:'Andrew',zbautista:'Zach',zbautista13:'Zach',sbautista:'Seth',KEEESHH:'Marcus',iamSeanWard:'Sean',Ko21:'Kody',jgargano:'Joey',KeiganW:'Keigan',jbitner24:'Jacob'};
 const api='https://api.sleeper.app/v1';
