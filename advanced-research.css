@@ -1,0 +1,45 @@
+/* AMFL Advanced Research — responsive editorial dashboard */
+#content .fp-research{--fp-blue:#2874cb;--fp-red:#cf3042;--fp-green:#2fa66a}
+.fp-research .fp-intro{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:24px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(115deg,var(--panel),var(--panel2));margin:0 0 17px}
+.fp-research .fp-eyebrow{font-weight:900;text-transform:uppercase;font-size:11px;letter-spacing:2px;color:#74baff}
+.fp-research .fp-title{font-size:clamp(25px,3vw,38px);font-weight:950;line-height:1.12;margin:8px 0}
+.fp-research .fp-summary{max-width:760px;margin:7px 0;color:var(--muted)}
+.fp-research .fp-source{border:1px solid var(--line);border-radius:30px;padding:7px 12px;white-space:nowrap;font-weight:800;font-size:11px;color:var(--muted)}
+.fp-research .fp-tabs{display:flex;gap:7px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;padding:3px 1px 11px;margin:0 0 17px;-webkit-overflow-scrolling:touch}
+.fp-research .fp-tabs button{flex:0 0 auto;border:1px solid var(--line);color:var(--white);border-radius:10px;background:var(--panel2);padding:10px 14px;font:800 12px/1.3 inherit;cursor:pointer}
+.fp-research .fp-tabs button.on{background:#c82735;color:white;border-color:#c82735;box-shadow:0 3px 12px #c8273540}
+.fp-research .fp-tabs button:hover:not(.on){border-color:#5b9de0}
+.fp-research .fp-meta{display:flex;flex-wrap:wrap;gap:9px;margin:10px 0 20px}
+.fp-research .fp-meta span{display:inline-flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--line);border-radius:30px;padding:6px 11px;font-size:11px;color:var(--muted)}
+.fp-research .fp-statgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:17px 0 21px}
+.fp-research .fp-stat{padding:17px 19px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.fp-research .fp-stat span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;font-weight:850}
+.fp-research .fp-stat strong{font-size:clamp(20px,2.3vw,32px);font-weight:950;color:var(--white);display:block;margin-top:5px}
+.fp-research .fp-panel{border:1px solid var(--line);border-radius:15px;overflow:hidden;background:var(--panel);margin:14px 0 22px}
+.fp-research .fp-panel-title{padding:15px 18px;font-weight:900;font-size:14px;background:var(--panel2);border-bottom:1px solid var(--line)}
+.fp-research .fp-panel .tablewrap{margin:0;border:0;border-radius:0;box-shadow:none}
+.fp-research .fp-panel table{margin:0;width:100%;border-collapse:collapse}
+.fp-research .fp-panel table th,.fp-research .fp-panel table td{padding:11px 14px}
+.fp-research .fp-panel table tr:hover td{background:color-mix(in srgb,var(--fp-blue) 9%,transparent)}
+.fp-research .fp-rankbar{height:9px;background:var(--line);border-radius:8px;overflow:hidden;min-width:100px}
+.fp-research .fp-rankbar>span{display:block;height:100%;background:linear-gradient(90deg,#2467be,#cf3042);border-radius:8px}
+.fp-research .fp-toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin:13px 0 20px}
+.fp-research .fp-toolbar label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:850;color:var(--muted)}
+.fp-research .fp-toolbar select,.fp-research .fp-toolbar input{background:var(--panel);color:var(--white);border:1px solid var(--line);border-radius:9px;padding:11px;max-width:100%;min-width:145px;font:inherit}
+.fp-research .fp-toolbar input{min-width:min(260px,100%)}
+.fp-research .fp-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.fp-research h3{font-size:18px;letter-spacing:-.2px;margin:24px 0 10px}
+.fp-research a{color:#75b5fa}
+.fp-research .fp-empty{padding:25px;color:var(--muted)}
+html[data-theme="light"] .fp-research{--fp-blue:#1859ad}
+html[data-theme="light"] .fp-research .fp-intro{background:linear-gradient(120deg,#edf5ff,#dfeafd);border-color:#afc8e8}
+html[data-theme="light"] .fp-research .fp-eyebrow{color:#18549d}
+html[data-theme="light"] .fp-research .fp-tabs button{background:#e9f2ff;color:#1b3e70;border-color:#bed0e8}
+html[data-theme="light"] .fp-research .fp-tabs button.on{background:#c82735;color:#fff}
+html[data-theme="light"] .fp-research .fp-stat{background:#fff}
+html[data-theme="light"] .fp-research .fp-stat strong{color:#143c72}
+html[data-theme="light"] .fp-research .fp-meta span{background:#eef4fe;color:#365476}
+html[data-theme="light"] .fp-research .fp-toolbar select,html[data-theme="light"] .fp-research .fp-toolbar input{background:#fff;color:#173b69}
+html[data-theme="light"] .fp-research a{color:#1557a0}
+@media(max-width:760px){.fp-research .fp-intro{padding:17px;flex-wrap:wrap}.fp-research .fp-statgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.fp-research .fp-grid{grid-template-columns:1fr}.fp-research .fp-panel{max-width:100%}.fp-research .fp-panel .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}.fp-research .fp-tabs button{padding:10px 12px}}
+@media(max-width:420px){.fp-research .fp-statgrid{gap:8px}.fp-research .fp-stat{padding:12px}.fp-research .fp-toolbar label{width:100%}.fp-research .fp-toolbar select,.fp-research .fp-toolbar input{width:100%}}
