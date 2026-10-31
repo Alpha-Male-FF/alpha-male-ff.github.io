@@ -3,12 +3,12 @@
 let data=null,error='',mode='weekly',position='ALL',query='';
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const button=document.createElement('button');
-button.dataset.page='research';button.textContent='Research Tab';
+button.dataset.page='research';button.textContent='Advanced Research';
 button.onclick=()=>setPage('research');
 document.getElementById('nav').append(button);
 function draw(){
  const area=document.getElementById('content');
- area.innerHTML='<h2 class="sectitle">Research Tab</h2>';
+ area.innerHTML='<h2 class="sectitle">Advanced Research</h2>';
  if(!data){area.innerHTML+='<p role="status">'+escape(error||'Loading FantasyPros snapshot…')+'</p>';return}
  if(window.renderResearch?.(data,area))return;
  const meta=data.weekly.data_as_of||{};
