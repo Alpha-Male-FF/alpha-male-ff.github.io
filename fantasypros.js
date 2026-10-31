@@ -21,6 +21,17 @@ function draw(){
  m.onchange=()=>{mode=m.value;pageNumber=0;results()};p.onchange=()=>{position=p.value;pageNumber=0;results()};s.oninput=()=>{query=s.value;pageNumber=0;results()};
  results();
 }
+window.renderAdvancedPlayers=function(container){
+ if(!data){container.innerHTML='<p class="muted">Loading player research snapshot…</p>';return}
+ const meta=data.weekly.data_as_of||{};
+ container.innerHTML='<div class="fp-toolbar"><label>Ranking horizon<select id="fp-mode"><option value="weekly">Weekly ECR</option><option value="ros">Rest of season</option><option value="DRAFT">Draft</option><option value="DYNASTY">Dynasty</option><option value="ROOKIES">Rookies</option><option value="projections">Weekly projections</option></select></label><label>Position<select id="fp-position">'+['ALL','QB','RB','WR','TE','K','DST'].map(p=>'<option>'+p+'</option>').join('')+'</select></label><label>Search players<input id="fp-search" type="search" placeholder="Player name or NFL team" aria-label="Search players"></label></div><div id="fp-results" aria-live="polite"></div><p class="muted small">FantasyPros · PPR · '+escape(meta.nfl_season)+' Week '+escape(meta.nfl_week)+'. Rankings and projections are saved snapshots, not live results. Weekly overall ECR uses the FLEX pool (RB/WR/TE).</p>';
+ const m=document.getElementById('fp-mode'),p=document.getElementById('fp-position'),q=document.getElementById('fp-search');
+ m.value=mode;p.value=position;q.value=query;
+ m.onchange=()=>{mode=m.value;pageNumber=0;results()};
+ p.onchange=()=>{position=p.value;pageNumber=0;results()};
+ q.oninput=()=>{query=q.value;pageNumber=0;results()};
+ results();
+};
 function results(){
  const projection=mode==='projections';
  let rows=projection?data.projections.flatMap(x=>x.projections||[]):(data[mode]||window.researchSnapshot?.rankings?.[mode]||{}).rankings||[];
