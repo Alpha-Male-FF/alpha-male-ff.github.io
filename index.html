@@ -181,6 +181,49 @@ html[data-theme="light"] .rival-spot{color:#1a3758;background:#f0f5fc}
 html[data-theme="light"] .rival-own{background:#e4f5ec}
 html[data-theme="light"] .rival-ouch{background:#fff0f1}
 html[data-theme="light"] .rival-big{color:#1a3758}
+/* Responsive AMFL hero and dashboard corrections */
+@media (min-width: 901px){
+ .amfl-hero{align-items:start!important;grid-template-columns:minmax(0,1fr) clamp(205px,19vw,265px)}
+ .amfl-hero-emblem{align-self:start!important;margin-top:34px!important}
+}
+@media (min-width: 611px) and (max-width: 900px){
+ .amfl-hero{grid-template-columns:minmax(0,1fr) 170px;align-items:start!important;gap:18px}
+ .amfl-hero-emblem{margin-top:35px!important;align-self:start!important}
+ .amfl-hero-emblem img{width:100%;max-width:155px}
+}
+@media (max-width: 610px){
+ .amfl-hero{grid-template-columns:minmax(0,1fr)!important;align-items:center!important;gap:18px}
+ .amfl-hero-emblem{margin:10px auto 0!important;align-self:center!important;justify-self:center!important;width:min(100%,250px)}
+ .amfl-hero-emblem img{width:min(100%,155px)!important}
+}
+@media (max-width: 900px){
+ .wrap{width:100%;min-width:0}
+ .topinner{min-width:0}
+ .nav{max-width:100%;min-width:0;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+ .grid2,.chartgrid{min-width:0}
+ .grid2>div,.chartgrid>div,.panel{min-width:0}
+ .chartcanvas,.panelbody{min-width:0}
+}
+@media (max-width: 700px){
+ .grid2,.chartgrid,.cardgrid{grid-template-columns:minmax(0,1fr)!important}
+ .stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .hero h1{font-size:clamp(35px,9vw,62px);letter-spacing:-1.7px}
+ .panelhead{gap:12px;overflow-wrap:anywhere}
+ .chartrow{grid-template-columns:minmax(75px,110px) minmax(0,1fr) minmax(45px,70px);gap:8px}
+ .chartrow>*{min-width:0}
+ .tablewrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+ .donutlayout{grid-template-columns:minmax(0,1fr)!important}
+ .donutlayout svg{max-width:230px;margin:0 auto}
+}
+@media (max-width: 400px){
+ .wrap{padding-left:14px;padding-right:14px}
+ .stats{gap:9px}
+ .stat{padding:13px}
+ .stat strong{font-size:26px}
+ .panelhead{padding:13px 14px}
+ .panelbody{padding:14px}
+ .nav button{padding:9px 10px}
+}
 </style></head><body><header class="top"><div class="wrap topinner"><a class="brand amfl-brand" href="/" aria-label="AMFL Home"><img src="/assets/amfl-shield.png" onerror="this.onerror=null;this.src='/assets/amfl-shield.svg'" alt="AMFL shield" width="57" height="57"><span class="amfl-wordmark"><strong>AMFL</strong><small>ALPHA MALE FOOTBALL LEAGUE</small></span></a><nav class="nav" id="nav"><button data-page="home" class="active">Home</button><button data-page="leaders">Leaderboards</button><button data-page="managers">Managers</button><button data-page="seasons">Seasons</button><button data-page="playoffs">Playoffs</button><button data-page="live">2026 Live ⚡</button><button data-page="players">Players &amp; Trades</button><a href="/records.html" style="display:inline-flex;align-items:center;padding:10px 13px;border-radius:7px;color:#f4bf56;font-weight:850;font-size:12px;text-transform:uppercase;letter-spacing:.5px;text-decoration:none;white-space:nowrap">Historical Records ↗</a></nav><button id="themeToggle" class="theme-toggle" type="button" aria-label="Switch color theme" onclick="toggleTheme()">☀ Light</button></div></header><main><div class="hero"><div class="wrap amfl-hero"><div class="amfl-hero-copy"><div class="eyebrow">Est. 2015 · A legacy that keeps growing</div><h1>THE LEGACY<br><span>IS FOREVER.</span></h1><div class="sub">Every championship. Every collapse. Every manager. The definitive Alpha Male fantasy football archive, 2015–2025, with live 2026 records included in career leaderboards and profiles.</div><div class="stats" id="stats"></div></div><div class="amfl-hero-emblem"><img src="/assets/amfl-season12.png" onerror="this.onerror=null;this.src='/assets/amfl-season12.svg'" alt="AMFL Season 12 custom favorite NFL teams crest" loading="eager"><span>SEASON 12 · 2026</span></div></div></div><div class="wrap section" id="content"><div class="muted">Loading league history…</div></div></main><footer class="foot"><div class="wrap">ALPHA MALE FF · 2015–2026 · ESPN (2015–2023) + Sleeper (2024–2026). Regular-season records exclude playoffs. ESPN playoff matchups reconstructed from bracket seeds and final placements; Sleeper scores verified. 2014 excluded.</div></footer><script>
 
 function applyTheme(theme){document.documentElement.dataset.theme=theme;const b=document.getElementById('themeToggle');if(b){b.textContent=theme==='light'?'☾ Dark mode':'☀ Light mode';b.setAttribute('aria-pressed',String(theme==='light'))}try{localStorage.setItem('amff-theme',theme)}catch(e){}}
