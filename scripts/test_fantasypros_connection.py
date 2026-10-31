@@ -7,7 +7,9 @@ base="https://api.fantasypros.com/public/v2/json/nfl/2026/"
 cases=[
  ("Weekly RB rankings","consensus-rankings?position=RB&scoring=PPR&week=8"),
  ("ROS FLEX rankings","consensus-rankings?position=FLX&scoring=PPR&type=ROS"),
- ("Weekly RB projections","projections?position=RB&week=8")
+ ("Weekly RB projections","projections?position=RB&week=8"),
+ ("Rankings larger page requested","consensus-rankings?position=RB&scoring=PPR&week=8&limit=100"),
+ ("Rankings second page requested","consensus-rankings?position=RB&scoring=PPR&week=8&offset=10&limit=10")
 ]
 errors=0
 for title,path in cases:
@@ -19,7 +21,7 @@ for title,path in cases:
   rows=obj.get("players",obj.get("rankings",obj.get("projections")))
   if not isinstance(rows,list): raise ValueError("No players array")
   fields=sorted(rows[0].keys()) if rows and isinstance(rows[0],dict) else []
-  print(f"PASS {title}: {len(rows)} players; fields: {', '.join(fields[:18])}")
+  print(f"PASS {title}: {len(rows)} players; reported count={obj.get('count', '—')}, limit={obj.get('limit', '—')}; fields: {', '.join(fields[:18])}")
   if title.startswith("Weekly RB rankings") and len(rows)<50:
    print("NOTICE: Small rankings response; possible free-tier result limit. Do not treat this as comprehensive.")
   if not rows: errors+=1;print("NOTICE: no players returned.")
