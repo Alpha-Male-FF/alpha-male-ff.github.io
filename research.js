@@ -1,6 +1,6 @@
 /* Research hub. FantasyPros remains the source for every displayed recommendation. */
 (()=>{
-let snapshot=null,loadError='',section='power',horizon='ros',team='',sos='RB',nfl='BUF';
+let snapshot=null,loadError='',section='power',horizon='ros',team='',selectedLeagueTeam='',sos='RB',nfl='BUF';
 const e=x=>String(x??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const horizons={ros:'Rest of season',week:'This week',dyn:'Dynasty',draft:'Draft'};
 const sections={power:'Power Rankings',standings:'Projected Standings',players:'Player Rankings & Projections',compare:'Player Comparison',rosters:'Team Rosters',matchups:'Matchup',lineup:'Start / Sit',waivers:'Waivers',trades:'Trades',schedule:'Strength of Schedule',depth:'Depth Charts',injuries:'Injuries & News',draft:'Draft & Keepers',tools:'FantasyPros Tools'};
@@ -22,6 +22,8 @@ window.renderResearch=(players,area)=>{
  if(!snapshot){area.innerHTML+='<p role="status">'+e(loadError||'Loading league research…')+'</p>';return true}
  area.innerHTML+='<div class="fp-meta"><span>📅 '+e(players.weekly.data_as_of?.nfl_season)+' · Week '+e(players.weekly.data_as_of?.nfl_week)+'</span><span>🔄 Saved '+e(new Date(snapshot.retrieved_at).toLocaleString())+'</span><span>🏈 Standard PPR player data</span><span>👤 Personal advice: '+e(snapshot.user_team)+'</span></div><p class="muted small">Saved results do not update automatically. FantasyPros estimates are not guaranteed outcomes; full custom league scoring is not reflected.</p><div id="research-body"></div>';
  const body=document.getElementById('research-body'),d=snapshot,a=d.analysis[horizon];
+ const selectTeams=d.rosters.teams||[]; selectedLeagueTeam=selectedLeagueTeam||selectTeams[0]?.team_id||'';
+ if(['power','standings','rosters'].includes(section))body.innerHTML='<div class="fp-toolbar">'+select('research-league-team','Focus team',Object.fromEntries(selectTeams.map(t=>[t.team_id,t.team_name])),selectedLeagueTeam)+'</div><p class="muted small">Focus controls highlighting and roster details. FantasyPros personalized start/sit, waiver and trade advice is only available for the synced account team.</p>';
  let html='';
  if(section==='players'){window.renderAdvancedPlayers?.(body);return true}
  if(section==='power'){
@@ -31,7 +33,7 @@ window.renderResearch=(players,area)=>{
  }else if(section==='standings'){
  html='<h3>Projected final regular-season standings</h3><p class="muted">FantasyPros season projections; these do not change with the power-ranking horizon. Odds are estimates, not guarantees.</p>'+table(['Projected finish','Team','Projected W–L–T','Playoff odds','Title odds'],[...d.analysis.ros.teams].sort((a,b)=>a.projected_rank-b.projected_rank).map(t=>[t.projected_rank,t.team_name,[t.projected_wins,t.projected_losses,t.projected_ties].join('–'),t.playoffs_odds,t.championship_odds]));
  }else if(section==='rosters'){
- team=team||d.rosters.teams[0]?.team_id;
+ team=selectedLeagueTeam||d.rosters.teams[0]?.team_id;
  const t=d.rosters.teams.find(t=>t.team_id===team);
  html='<div class="toolbar">'+select('research-team','Team',Object.fromEntries(d.rosters.teams.map(t=>[t.team_id,t.team_name])),team)+'</div>'+table(['Position','Players'],Object.entries(t?.roster||{}).map(([pos,players])=>[pos,names(players)]));
  }else if(section==='matchups'){
@@ -49,7 +51,8 @@ window.renderResearch=(players,area)=>{
  html='<h3>Suggested trades · '+e(d.user_team)+'</h3><p class="muted">FantasyPros Trade Finder suggestions based on rest-of-season improvement. Confirm a candidate in Trade Analyzer before acting.</p>'+table(['Partner','Send','Receive'],d.trades.moves.map(m=>[m.partner,names(m.send),names(m.receive)]))+'<p>'+link('Open Trade Analyzer','myplaybook/trade-analyzer.php')+'</p>';
  }else if(section==='schedule'){
  const s=d.schedule[sos],rows=s['easiest schedules']?.schedules||[];
- html='<div class="toolbar">'+select('research-sos','Position',Object.fromEntries(Object.keys(d.schedule).map(k=>[k,k])),sos)+'</div><h3>'+e(sos)+' strength of schedule · '+e(s.sos_window?.label)+'</h3><p class="muted">Lower rank and more stars mean easier matchups. DST describes a whole defense.</p>'+table(['Team','Ease rank','Stars / 5','Remaining schedule'],rows.map(t=>{const strength=t['Strength of Schedule']||{};return [t.team,strength[sos.toLowerCase()+'_rank_out_of_32'],strength[sos.toLowerCase()+'_stars_out_of_5'],(t.Matchups||[]).flatMap(m=>Object.entries(m).map(([week,v])=>week+': '+v.matchup)).join(' · ')]}));
+ const weeks=[...new Set(rows.flatMap(t=>(t.Matchups||[]).flatMap(m=>Object.keys(m))))].sort((a,b)=>Number(a.match(/\\d+/)?.[0]||0)-Number(b.match(/\\d+/)?.[0]||0));
+ html='<div class="fp-toolbar">'+select('research-sos','Position',Object.fromEntries(Object.keys(d.schedule).map(k=>[k,k])),sos)+'</div><h3>'+e(sos)+' remaining strength of schedule · '+e(s.sos_window?.label)+'</h3><p class="muted">Showing '+rows.length+' of 32 NFL teams in this saved FantasyPros report. The remaining teams were not included in the export. Lower ease rank and more stars mean easier schedules. Schedule cells show opponents, not individual-week difficulty ratings.</p><div class="fp-panel"><div class="fp-panel-title">Matchup calendar · '+e(sos)+'</div><div class="tablewrap"><table><thead><tr><th>Team</th><th>SOS</th>'+weeks.map(w=>'<th>'+e(w)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(t=>{const st=t['Strength of Schedule']||{},rating=Number(st[sos.toLowerCase()+'_stars_out_of_5']||0),rank=st[sos.toLowerCase()+'_rank_out_of_32'];const map=Object.assign({},...(t.Matchups||[]));return '<tr><td><strong>'+e(t.team)+'</strong></td><td><span class="fp-sos-rating">'+('★'.repeat(Math.max(0,Math.min(5,Math.round(rating)))))+'</span><small> #'+e(rank)+'</small></td>'+weeks.map(w=>{const value=map[w]?.matchup||'—';return '<td class="'+(value==='BYE'?'fp-sos-bye':'')+'">'+e(value)+'</td>'}).join('')+'</tr>'}).join('')+'</tbody></table></div></div><p class="muted small">For complete 32-team SOS, the research snapshot must include all teams; no missing scores or difficulty ratings are estimated.</p>';
  }else if(section==='depth'){
  html='<div class="toolbar">'+select('research-nfl','NFL team',Object.fromEntries(Object.keys(d.depth).map(k=>[k,k])),nfl)+'</div><p class="muted">Position ECR is weekly, or rest of season for teams on bye.</p>'+table(['Position','Depth','Player','Position ECR'],Object.entries(d.depth[nfl]).filter(([,v])=>Array.isArray(v)).flatMap(([pos,rows])=>rows.map(p=>[pos,p.depth,p.playerName,p.ecrRank])));
  }else if(section==='injuries'){
@@ -63,8 +66,8 @@ window.renderResearch=(players,area)=>{
  html='<h3>FantasyPros football toolbox</h3><p class="muted">These tools open FantasyPros and may require sign-in. Custom analyses run there; saved research appears in the sections above.</p><ul>'+[
  ['League Analyzer','myplaybook/league-analyzer.php'],['Start/Sit Assistant','myplaybook/start-sit-assistant.php'],['Who Should I Start?','start/'],['Waiver Assistant','myplaybook/waiver-assistant.php'],['Trade Analyzer','myplaybook/trade-analyzer.php'],['Trade Finder','myplaybook/trade-finder.php'],['Draft Wizard & Keeper Research','draft/'],['Player Stats','stats/'],['Rankings','rankings/'],['Projections','projections/'],['Depth Charts','depth-charts.php'],['Injury News','injuries.php']].map(([label,path])=>'<li>'+link(label,path)+'</li>').join('')+'</ul>';
  }
- body.innerHTML=html;
- for(const [id,apply] of Object.entries({'research-horizon':v=>horizon=v,'research-team':v=>team=v,'research-sos':v=>sos=v,'research-nfl':v=>nfl=v})){const input=document.getElementById(id);if(input)input.onchange=()=>{apply(input.value);refresh()}}
+ body.innerHTML+=html;
+ for(const [id,apply] of Object.entries({'research-horizon':v=>horizon=v,'research-league-team':v=>selectedLeagueTeam=v,'research-team':v=>{team=v;selectedLeagueTeam=v},'research-sos':v=>sos=v,'research-nfl':v=>nfl=v})){const input=document.getElementById(id);if(input)input.onchange=()=>{apply(input.value);refresh()}}
  for(let i=0;i<4;i++){const input=document.getElementById('research-compare-'+i);if(input)input.onchange=()=>{const ids=[0,1,2,3].map(j=>document.getElementById('research-compare-'+j).value);const rows=players.projections.flatMap(p=>p.projections).filter(p=>ids.includes(String(p.fpid)));document.getElementById('research-comparison').innerHTML=table(['Player','Team','Position','PPR projection','Passing yards','Rushing yards','Receptions','Receiving yards'],rows.map(p=>[p.name,p.team,p.position,p.stats.points_ppr,p.stats.pass_yds,p.stats.rush_yds,p.stats.rec_rec,p.stats.rec_yds]))}}
  return true;
 };
