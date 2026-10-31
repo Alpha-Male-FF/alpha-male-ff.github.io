@@ -29,6 +29,13 @@ globalThis.window=globalThis;
 vm.runInThisContext(await fs.readFile('power-rankings.js','utf8'),{filename:'power-rankings.js'});
 const result=globalThis.amflComputePowerRankings(seasons.flatMap(s=>s.games));
 if(result.rankings.length===0&&weeks2026>0)throw Error('Missing rankings despite completed weeks; preserving prior snapshot');
+try{
+ const old=JSON.parse(await fs.readFile('power-rankings.json','utf8'));
+ if(Number(old.week)<Number(result.week)){
+  const ranks=new Map((old.rankings||[]).map(x=>[x.name,Number(x.rank)]));
+  for(const row of result.rankings){row.previousRank=ranks.get(row.name)??null;row.rankMovement=row.previousRank===null?null:row.previousRank-row.rank;}
+ }
+}catch(e){console.log('No prior published rankings available for movement comparison.')}
 result.generatedAt=new Date().toISOString();
 result.source='Sleeper API / AMFL official algorithm';
 result.coverage=Object.fromEntries(seasons.map(s=>[s.year,s.games.length]));
