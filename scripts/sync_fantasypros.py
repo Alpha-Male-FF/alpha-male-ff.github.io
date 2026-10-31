@@ -64,7 +64,7 @@ def get_rankings(kind):
     # Position-specific requests keep a reliable fallback for endpoints
     # that do not expose full-roster ALL/FLEX rankings.
     found = {}
-    for pos in ("RB", "WR", "TE") if kind != "DRAFT" else POSITIONS:
+    for pos in ("FLX",):
         args = {"position": pos, "scoring": "PPR"}
         if kind == "ros":
             args["type"] = "ROS"
