@@ -44,6 +44,26 @@ html[data-theme="light"] .foot{border-color:var(--line)}html[data-theme="light"]
 .live-card{padding:15px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}.live-card strong{display:block;font-size:24px;color:var(--gold)}
 @media(min-width:1000px){.trophy-chart{max-width:835px;margin-left:auto;margin-right:auto}}
 @media(max-width:640px){.live-cards{grid-template-columns:1fr 1fr}.trophy-chart .donutlayout{grid-template-columns:1fr}.trophy-chart .donutlayout svg{width:195px;margin:auto}}
+
+/* AMFL visual identity — stronger distinction from the former dark theme */
+:root{--bg:#03152c;--panel:#102b4c;--panel2:#17395e;--line:#3e5b80;--gold:#f3bd4c;--cyan:#459de8;--muted:#bdcce0}
+body{background:radial-gradient(ellipse at 65% -12%,#174477 0%,transparent 58%),var(--bg)}
+.top{background:linear-gradient(90deg,#051a36,#09294e);border-bottom:3px solid #d6a643}
+.hero{background:linear-gradient(112deg,#071d3b 0%,#0e3461 59%,#03152c 100%);border-bottom:2px solid #ad8a46}
+.amfl-hero-emblem{background:radial-gradient(circle at 50% 48%,rgba(244,190,76,.18),rgba(25,60,105,.24) 58%,transparent 76%);border:1px solid #b18846}
+.amfl-hero-emblem img{min-height:160px;object-fit:contain}
+.nav button.active{background:#d6a643;color:#06162c}
+.nav button:hover{background:#315d91;color:#fff}
+.panel{background:var(--panel);border-color:var(--line)}
+.panelhead{background:linear-gradient(90deg,#1a416d,#123153)}
+.manager{background:#102b4c}
+th{background:#183d69;color:#f4d291}
+.charttrack{background:#244669}
+.stat{background:linear-gradient(140deg,#183d69,#102746)}
+.stat strong{color:#f3bd4c}
+a.brand:hover .amfl-wordmark strong{color:#f3bd4c}
+html[data-theme="light"] .nav button.active{background:#d6a643;color:#06162c}
+html[data-theme="light"] .panel{background:var(--panel)}
 /* AMFL 2026 identity */
 .amfl-brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--white);flex-shrink:0}
 .amfl-brand img{width:57px;height:57px;object-fit:contain;filter:drop-shadow(0 1px 7px rgba(0,0,0,.3))}
