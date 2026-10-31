@@ -13,7 +13,7 @@ function compute(games){
   for(const g of matches){weekScores.set(g.a,Number(g.scoreA));weekScores.set(g.b,Number(g.scoreB))}
   if(weekScores.size<6)continue;
   if(week===1){for(const n of names)ratings.set(n,1500+(ratings.get(n)-1500)*.65)}
-  const participants=[...weekScores],mean=participants.reduce((s,n)=>s+weekScores.get(n),0)/participants.length;
+  const participants=[...weekScores.keys()],mean=participants.reduce((s,n)=>s+weekScores.get(n),0)/participants.length;
   const records=[];
   for(const name of participants){
    const points=weekScores.get(name),other=participants.filter(n=>n!==name);
