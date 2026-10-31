@@ -124,8 +124,8 @@ def main():
     weekly = get_rankings("weekly")
     ros = get_rankings("ros")
     projections = get_projections()
-    if not weekly["rankings"] or not ros["rankings"] or not any(x["projections"] for x in projections):
-        raise SystemExit("FantasyPros returned incomplete data; original snapshot preserved.")
+    if len(weekly["rankings"]) < 50 or len(ros["rankings"]) < 100 or any(len(x["projections"]) < 20 for x in projections):
+        raise SystemExit("FantasyPros API results are truncated (possibly free-tier 10-player cap). Original public snapshot preserved; do not enable publication until full access is confirmed.")
     updated["weekly"] = weekly
     updated["ros"] = ros
     updated["projections"] = projections
