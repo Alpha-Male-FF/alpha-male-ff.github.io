@@ -82,16 +82,6 @@ When the Tuesday GitHub Action updates `data-2026.json`, the website automatical
 
 The static `data.json` still holds the finalized archive; do not overwrite it with weekly live snapshots. If you have a new manager in 2026 who is not in `LIVE_NAMES`, add their Sleeper username-to-name mapping in `index.html` before deployment.
 
+## Research integration status
 
-## FantasyPros player intelligence
-
-The FantasyPros navigation tab reads `fantasypros-data.json`, gathered through the connected FantasyPros tools. It includes 2026 Week 8 PPR FLEX ECR, rest-of-season ECR, and weekly projections for QB/RB/WR/TE/K/DST. Search and position filters run locally. Source dates and snapshot age are shown; missing players are not treated as inactive. This is a saved snapshot, not a live API connection.
-
-To refresh through Codex, request current FantasyPros PPR WEEKLY and ROS ECR plus weekly projections for each of the six positions using the source-reported season/week. Replace the JSON atomically with schema_version 1, source, retrieved_at (UTC ISO timestamp), scoring, weekly and ros (the complete returned ranking objects), and projections (the six complete returned projection objects). Check errors before replacing the last successful snapshot. Never put account tokens or league keys into public assets. The existing Sleeper workflow does not refresh FantasyPros. Publish the updated files through the existing GitHub Pages workflow.
-
-
-## Research Tab
-
-The former FantasyPros tab is now Research Tab. `research.js` and `research-data.json` add all ten teams’ FantasyPros power rankings (weekly, ROS, dynasty, draft), projected final records and playoff/title odds, positional strength, rosters, the connected team’s matchup and lineup advice, waiver and trade suggestions, six-position schedule strength, all 32 NFL depth charts, roster injury reports and dated news links, ADP, and a comparison of saved player projections. Custom trade/waiver/keeper analyses and other authenticated tools open FantasyPros through the toolbox. The static website cannot invoke the chat’s authenticated connector or run new personalized calculations.
-
-Refresh the player snapshot and league research snapshot together through the connected FantasyPros tools. Always resolve the league key through get_leagues and pass it on every league-scoped request. Keep keys, account URLs and credentials out of public JSON. Store original power score strings and ranking horizons; never substitute roster strength for projected standings. Injury news stores links and publication times. No lineup, waiver or trade is submitted by the website. Research snapshots are saved data; the Sleeper scheduled sync does not refresh them.
+FantasyPros Advanced Research has been removed from the live website, including public research snapshots, scripts and GitHub Actions workflows. The rest of the AMFL site remains operational. Implementation history is retained in Git commits should the league choose a future authorized research source.
