@@ -24,7 +24,7 @@ section h2{color:#f4f7fc!important}
 <div class="notice"><strong>Coverage notice:</strong> These are historical matchups, not complete all-time league records. Entire regular-season weeks are missing in 2016 (Weeks 1 &amp; 11) and 2021 (Week 4). 2014 and Sleeper 2024–2025 are excluded. Playoff-tagged results can include consolation games.</div>
 <div class="metrics" id="metrics"></div>
 <div class="controls"><label class="small">Season<br><select id="year"><option value="all">All seasons</option></select></label><label class="small">Phase<br><select id="phase"><option value="all">All games</option><option value="regular">Regular season</option><option value="playoff">Playoff-tagged</option></select></label><label class="small">Manager<br><select id="manager"><option value="all">All managers</option></select></label></div>
-<h2>Regular-season career standings</h2><div class="panel"><table class="tbl"><thead><tr><th>Manager</th><th>W</th><th>L</th><th>T</th><th>Games</th><th>PF</th><th>PA</th><th>Win %</th></tr></thead><tbody id="standings"></tbody></table></div>
+<h2>Regular-season career standings</h2><p class="muted" id="career-basis">Loading complete season totals…</p><div class="panel"><table class="tbl"><thead><tr><th>Manager</th><th>W</th><th>L</th><th>T</th><th>Games</th><th>PF</th><th>PA</th><th>Win %</th></tr></thead><tbody id="standings"></tbody></table></div>
 <h2>Single-week team scoring records</h2><div class="panel"><table class="tbl"><thead><tr><th>Manager</th><th>Team</th><th>Season</th><th>Week</th><th>Points</th><th>Phase</th></tr></thead><tbody id="scoring"></tbody></table></div>
 <h2>Largest blowouts</h2><div class="panel"><table class="tbl"><thead><tr><th>Winner</th><th>Loser</th><th>Season</th><th>Week</th><th>Score</th><th>Margin</th></tr></thead><tbody id="blowouts"></tbody></table></div>
 <div class="head"><h2>Head-to-head explorer</h2><span class="muted" id="matchcount"></span></div><div class="controls"><input id="search" placeholder="Search manager or team" aria-label="Search matchups"><button id="prev">Previous</button><button id="next">Next</button><span id="page" class="muted"></span></div>
@@ -37,10 +37,37 @@ const safe=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;
 const managers=[...new Set(games.flatMap(g=>[g.a,g.b]))].sort();const seasons=[...new Set(games.map(g=>g.year))];
 seasons.forEach(y=>$('#year').insertAdjacentHTML('beforeend',`<option>${y}</option>`));managers.forEach(m=>$('#manager').insertAdjacentHTML('beforeend',`<option value="${safe(m)}">${safe(m)}</option>`));
 let page=0;const pageSize=25;
+let careerRows=null;
+const liveManagerMap={'zbautista13':'Zach','sbautista':'Seth','iamSeanWard':'Sean','Ko21':'Kody','ajgardner307':'Andrew','jgargano':'Joey','G-wizz':'Mike','jlong11':'Justin','KeiganW':'Keigan','ryan14cook':'Ryan','jbitner24':'Jacob','KEEESHH':'Marcus'};
+async function loadCareerTotals(){
+ try{
+  const [historyResponse,liveResponse]=await Promise.all([fetch('./data.json?cache='+Date.now()),fetch('./data-2026.json?cache='+Date.now())]);
+  if(!historyResponse.ok||!liveResponse.ok)throw Error('Data files unavailable');
+  const history=await historyResponse.json(),live=await liveResponse.json();
+  const rows=new Map(history.totals.map(x=>[x.Manager,{name:x.Manager,w:Number(x.W)||0,l:Number(x.L)||0,t:Number(x.T)||0,pf:Number(x.PF)||0,pa:Number(x.PA)||0}]));
+  if(Number(live.season)===2026&&Array.isArray(live.standings)){
+   const recognized=new Set();
+   for(const x of live.standings){
+    const name=liveManagerMap[x.username]||liveManagerMap[x.display_name]||x.display_name||x.username;
+    if(recognized.has(name))continue;
+    recognized.add(name);
+    const row=rows.get(name)||{name,w:0,l:0,t:0,pf:0,pa:0};
+    row.w+=Number(x.wins)||0;row.l+=Number(x.losses)||0;row.t+=Number(x.ties)||0;
+    row.pf+=Number(x.points_for)||0;row.pa+=Number(x.points_against)||0;
+    rows.set(name,row);
+   }
+  }
+  careerRows=[...rows.values()].map(x=>({...x,n:x.w+x.l+x.t})).filter(x=>x.n>0);
+  const label=document.querySelector('#career-basis');
+  if(label)label.textContent='Career standings use full 2015–2025 season totals + the latest saved 2026 Sleeper standings. Matchup and weekly-score tables below use available individual game records.';
+  redraw();
+ }catch(e){const label=document.querySelector('#career-basis');if(label)label.textContent='Career totals unavailable; this table currently reflects archived scored games only ('+e.message+').';}
+}
+
 function filtered(){const y=$('#year').value,p=$('#phase').value,m=$('#manager').value,q=$('#search').value.toLowerCase();return games.filter(g=>(y==='all'||g.year==y)&&(p==='all'||(p==='playoff'?g.playoff:!g.playoff))&&(m==='all'||g.a===m||g.b===m)&&(!q||[g.a,g.b,g.aName,g.bName].join(' ').toLowerCase().includes(q)))}
 function redraw(){const v=filtered(),regular=v.filter(g=>!g.playoff),rec=Object.fromEntries(managers.map(m=>[m,{name:m,w:0,l:0,t:0,pf:0,pa:0,n:0}]));
 for(const g of regular){for(const [m,a,b] of [[g.a,g.aScore,g.bScore],[g.b,g.bScore,g.aScore]]){const r=rec[m];r.n++;r.pf+=a;r.pa+=b;r[a>b?'w':a<b?'l':'t']++}}
-const ranks=Object.values(rec).filter(r=>r.n).sort((a,b)=>b.w-a.w||a.l-b.l);
+const careerMode=$('#year').value==='all'&&$('#phase').value!=='playoff'&&careerRows;const careerSubset=careerMode?careerRows.filter(x=>$('#manager').value==='all'||x.name===$('#manager').value):null;const ranks=(careerSubset||Object.values(rec).filter(r=>r.n)).sort((a,b)=>b.w-a.w||a.l-b.l);
 $('#standings').innerHTML=ranks.map(r=>`<tr><td><b>${safe(r.name)}</b></td><td>${r.w}</td><td>${r.l}</td><td>${r.t}</td><td>${r.n}</td><td>${fmt(r.pf)}</td><td>${fmt(r.pa)}</td><td>${(100*(r.w+r.t/2)/r.n).toFixed(1)}%</td></tr>`).join('');
 const scores=v.flatMap(g=>[{manager:g.a,team:g.aName,year:g.year,week:g.week,points:g.aScore,playoff:g.playoff},{manager:g.b,team:g.bName,year:g.year,week:g.week,points:g.bScore,playoff:g.playoff}]).sort((a,b)=>b.points-a.points).slice(0,15);
 $('#scoring').innerHTML=scores.map(r=>`<tr><td>${safe(r.manager)}</td><td>${safe(r.team)}</td><td>${r.year}</td><td>${r.week}</td><td><b>${fmt(r.points)}</b></td><td>${r.playoff?'Postseason':'Regular'}</td></tr>`).join('');
@@ -72,4 +99,6 @@ for(const s of ['year','phase','manager','search'])$("#"+s).addEventListener(s==
    redraw();
  }catch(e){note.textContent='NFL historical matchups loaded. Sleeper 2024–2025 scores could not be retrieved: '+e.message;}
 })();
+
+loadCareerTotals();
 </script></body></html>
