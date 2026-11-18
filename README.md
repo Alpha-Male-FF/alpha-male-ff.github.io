@@ -85,3 +85,24 @@ The static `data.json` still holds the finalized archive; do not overwrite it wi
 ## Research integration status
 
 FantasyPros Advanced Research has been removed from the live website, including public research snapshots, scripts and GitHub Actions workflows. The rest of the AMFL site remains operational. Implementation history is retained in Git commits should the league choose a future authorized research source.
+
+## Analytics Lab (2024–2026)
+
+`analytics.html` provides season and manager selection, sortable performance standings,
+all-play records, expected wins, schedule and median luck, scoring consistency,
+hindsight roster efficiency, weekly records and lineup receipts. `scripts/sync_analytics.py`
+refreshes `analytics-data.json` from public Sleeper inputs. The existing Tuesday workflow
+now refreshes both snapshots. Run manually with `python scripts/sync_analytics.py`.
+
+The active-season forecast uses 10,000 seeded historical team-scoring simulations and
+the six-team fixed bracket. It is not a player projection model. Forecasts are suppressed
+for incomplete schedules or unsupported settings. The page documents formulas and
+historical position/IR/lineup-lock limitations. Missing inputs are not replaced by zero.
+Schedule luck is distinct from the archive's existing PF/PA Luck Index.
+
+Validation: `python -m unittest discover -s tests -v` and `node --check analytics.js`.
+
+Remaining screenshot features: player projections and waiver recommendations, roster
+comparison, injury scenarios, rooting guide, trade outcome attribution, licensed market
+values, multi-league dashboard, news and draft tools. None are represented as live tools
+in this first release. No third-party analyzer outputs are imported.
