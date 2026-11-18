@@ -13,7 +13,7 @@ setImmediate(()=>{
  }
  const fixture={slots:['RB','FLEX'],profiles:{a:{baseline:20,positions:['RB']},b:{baseline:19,positions:['WR']},c:{baseline:10,positions:['RB']}}};
  context.fixture=fixture;assert.equal(vm.runInContext("assignLineup(fixture,['a','a','b','c']).total",context),39);
- fixture.slots=['QB','RB'];assert.equal(vm.runInContext("assignLineup(fixture,['a','b','c'])",context),null);
+ fixture.slots=['QB','RB'];assert.equal(vm.runInContext("assignLineup(fixture,['a','b','c'])",context),null);assert.equal(vm.runInContext("assignLineup(fixture,['a','b','c'],true).total",context),20);assert.equal(vm.runInContext("assignLineup(fixture,['a','b','c'],true).missing.join(',')",context),'QB');
  el('#season').value='2026';vm.runInContext("openPlayer(Object.keys(ts().profiles)[0])",context);assert.ok(el('#playerContent').innerHTML.includes('Weekly scoring'));
  console.log('Passed all 210 season/manager/tool renders, lineup assignment checks and player profile render.');
 });

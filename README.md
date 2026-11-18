@@ -111,8 +111,10 @@ scoring through the last scored week (historical seasons include Weeks 15–17).
 Recent player baselines use at least two observed weeks in the last four completed
 league weeks, with recorded zeros included. These are descriptive league-scoring
 averages, not market values or projections. The trade sandbox recomputes a slot-compatible
-starting lineup before and after a hypothetical swap. IR, taxi and missing-baseline
-players are excluded and coverage is shown. It does not submit actions to Sleeper.
+starting lineup before and after a hypothetical swap. Roster reserve/taxi slots and
+missing-baseline players are excluded and coverage is shown. Partial totals are
+allowed; changes are withheld when the unmodeled slot types change. Injury-status
+labels are displayed but NFL availability is not modeled. It does not submit actions to Sleeper.
 
 Trade/waiver receipts count actual starter points only in completed weeks strictly
 between acquisition and departure weeks. Duplicate incoming records without a departure
