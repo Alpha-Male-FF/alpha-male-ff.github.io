@@ -3,6 +3,7 @@
 import json, math, random, statistics, datetime, pathlib, urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from analytics_tools import build_tools
+from research_metrics import build_research
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 API='https://api.sleeper.app/v1'
 LEAGUES={2024:'1137184732384940032',2025:'1257118106497593344',2026:'1386887172610600960'}
@@ -105,9 +106,12 @@ def build():
         supported=len(names)==10 and league['settings'].get('playoff_teams')==6 and not league['settings'].get('playoff_seed_type') and not league['settings'].get('playoff_round_type') and not league['settings'].get('divisions')
         forecast=simulate(teams,schedule) if supported and len(schedule)==expected_games and not skipped else None
         seasons.append({'year':year,'league_id':lid,'teams':teams,'records':records,'skipped_weeks':skipped,'schedule':schedule,'forecast':forecast,'last_week':last})
-        tools_seasons.append(build_tools(year,lid,league,rosters,names,players,weeks,state,get))
+        tool_season=build_tools(year,lid,league,rosters,names,players,weeks,state,get)
+        tool_season['team_names']={r['roster_id']:((um.get(r['owner_id'],{}).get('metadata') or {}).get('team_name') or names[r['roster_id']]) for r in rosters}
+        tools_seasons.append(tool_season)
         print(f'{year}: {len(records)} team-weeks; skipped {skipped}; forecast {bool(forecast)}',flush=True)
     output={'updated_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'seasons':seasons}
     (ROOT/'analytics-data.json').write_text(json.dumps(output,separators=(',',':'))+'\n')
     (ROOT/'analytics-tools-data.json').write_text(json.dumps({'updated_at':output['updated_at'],'seasons':tools_seasons},separators=(',',':'))+'\n')
+    (ROOT/'research-data.json').write_text(json.dumps({'updated_at':output['updated_at'],'seasons':build_research(seasons)},separators=(',',':'))+'\n')
 if __name__=='__main__':build()

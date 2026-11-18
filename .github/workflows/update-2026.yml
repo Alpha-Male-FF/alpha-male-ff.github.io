@@ -28,9 +28,12 @@ jobs:
           python scripts/sync_sleeper_2026.py
           python scripts/sync_analytics.py
 
+      - name: Refresh nflverse research
+        run: python scripts/sync_nflverse.py
+
       - name: Commit and push changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data-2026.json analytics-data.json analytics-tools-data.json
+          git add data-2026.json analytics-data.json analytics-tools-data.json research-data.json nflverse-data.json
           git diff --quiet && git diff --staged --quiet || (git commit -m "Update 2026 Sleeper data [skip ci]" && git push)

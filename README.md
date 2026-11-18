@@ -134,3 +134,52 @@ outputs are imported. Browser-only tools do not place offers, claims or roster c
 
 Additional checks: `node tests/test_analytics_ui.cjs` renders all seven tools for all 30
 season/manager combinations and verifies FLEX assignment and player profile rendering.
+
+## Integrated Research tab
+
+Research now mounts as an isolated custom element in the main site's `#research`
+tab; it is not an iframe or a separate page. Old `/analytics.html` links redirect
+to that tab. Deep links such as `/#research/bracket` and `/#manager/Seth` are
+supported, including browser Back. The main theme toggle controls Research.
+
+Edit `analytics.js`, `analytics-tools.js`, `research-extras.js`, `analytics.css`
+and `research-template.html`, then run `python scripts/build_research.py` to
+regenerate `research.js` and `research.css`. Generated files are checked into Git
+for buildless GitHub Pages hosting. Team and manager links lead to the existing
+career profiles. Native dropdown options remain selection controls.
+
+The Research power rating uses the existing AMFL component weights: Elo 30%,
+all-play 30%, scoring ratio 20%, played SOS 10%, last-three-week form 10%.
+`research-data.json` is generated with the analytics snapshot. Played SOS Elo uses
+opponents' ratings immediately before their games; remaining SOS uses current
+opponent ratings. The playoff graphic seeds a coherent field by expected final
+wins then PF and allows manual bracket-winner changes, without changing baseline
+season simulation odds. Outcome-path bands describe mutually exclusive finishes.
+
+The Trade Calculator groups players by position, shows sent totals, received
+assets, before/after lineups, depth, and ranks among fully covered rosters. Its
+optional additions reduce modeled lineup-gain imbalance; they do not establish
+market fairness or trade acceptance. It uses recent observed scoring only. Scenario
+wins-added shifts the historical team scoring mean by its lineup change, keeps
+variance fixed and recomputes remaining regular-season matchup chances for both
+parties. It is an uncalibrated what-if model, not a player projection.
+
+`python scripts/sync_nflverse.py` imports the official `stats_player` weekly CSV
+releases (the newer endpoint used by nflreadr's `R/load_stats.R`) and `schedules`
+release. The legacy `player_stats.csv` stops at 2024 and is not used. Published
+NFL tools cover 2024–2026: team scoring, passing/rushing EPA, defense EPA allowed,
+QB EPA/dropback (100-dropback minimum), WR/TE targets and shares, NFL schedule and
+PPR defensive matchup averages for Weeks 15–17. NFL seasons have an independent
+selector and explicit coverage week. These are factual statistics, not projections.
+
+Data attribution: [nflverse/nflverse-data](https://github.com/nflverse/nflverse-data),
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). AMFL aggregates and
+formats player records and schedules. Receiver EPA is not added to passing EPA,
+avoiding double counting. Matchup denominators use games through the player-stat
+coverage week; standard PPR points are distinct from AMFL custom scoring.
+
+The Tuesday workflow refreshes Sleeper analytics, schedule/power metrics and
+nflverse extracts. A failed NFL refresh leaves the prior published files intact.
+Validation includes `python -m unittest discover -s tests -v`,
+`node tests/test_analytics_ui.cjs` (330 season/manager/tool renders), and browser
+checks of main-tab routing, profile links, calculator controls and mobile layout.
