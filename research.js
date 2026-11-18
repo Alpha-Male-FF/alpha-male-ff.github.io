@@ -137,7 +137,7 @@ function managerAnchor(name,label=name){return `<a class="textbutton team-link" 
 function teamAnchor(s,id){const name=s.names[id]||String(id),team=teamTitle(s,id);return `<a class="textbutton team-link" href="#manager/${encodeURIComponent(name)}" data-name="${esc(name)}">${esc(team)}${team!==name?`<small>${esc(name)}</small>`:''}</a>`}
 function enhanceResearchLinks(){
  if(typeof document.createTreeWalker!=='function'||!ts())return;
- const s=ts(),labels=[...Object.entries(s.names).map(([id,n])=>[n,n]),...Object.entries(s.team_names||{}).map(([id,n])=>[n,s.names[id]])].filter(([label,n])=>label&&n).sort((a,b)=>b[0].length-a[0].length);
+ const s=ts();for(const a of $('#app').querySelectorAll('a[data-name]'))a.href='#manager/'+encodeURIComponent(a.dataset.name);const labels=[...Object.entries(s.names).map(([id,n])=>[n,n]),...Object.entries(s.team_names||{}).map(([id,n])=>[n,s.names[id]])].filter(([label,n])=>label&&n).sort((a,b)=>b[0].length-a[0].length);
  for(const target of [...(labTab==='nfl'?[]:[$('#app')]),$('#playerContent')]){if(!target)continue;const walker=document.createTreeWalker(target,NodeFilter.SHOW_TEXT),nodes=[];let node;
   while(node=walker.nextNode()){if(node.parentElement?.closest('a,button,select,option,input,textarea,svg,#playerTitle'))continue;nodes.push(node)}
   for(const node of nodes){const text=node.textContent;if(!text.trim())continue;const matches=[];
@@ -145,7 +145,7 @@ function enhanceResearchLinks(){
    if(!matches.length)continue;const fragment=document.createDocumentFragment();let offset=0;for(const m of matches.sort((a,b)=>a.start-b.start)){fragment.append(document.createTextNode(text.slice(offset,m.start)));const a=document.createElement('a');a.className='textbutton team-link';a.href='#manager/'+encodeURIComponent(m.name);a.dataset.name=m.name;a.textContent=m.label;fragment.append(a);offset=m.end}fragment.append(document.createTextNode(text.slice(offset)));node.replaceWith(fragment)
   }
  }
- for(const option of $('#manager').options){const id=Object.keys(s.names).find(id=>s.names[id]===option.value);if(id){const label=option.value+' · '+teamTitle(s,id);if(option.textContent!==label)option.textContent=label}}
+ for(const option of $('#manager').options){const id=Object.keys(s.names).find(id=>s.names[id]===option.value);if(id){option.value=s.names[id];const label=option.value+' · '+teamTitle(s,id);if(option.textContent!==label)option.textContent=label}}
 }
 function chance(a,b){if(a.avg==null||b.avg==null)return .5;const z=(a.avg-b.avg)/Math.sqrt((Math.max(15,a.sd||15)**2+Math.max(15,b.sd||15)**2)*2),sign=z<0?-1:1,x=Math.abs(z),t=1/(1+.3275911*x),erf=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-.284496736)*t+.254829592)*t*Math.exp(-x*x);return Math.max(.001,Math.min(.999,.5*(1+sign*erf)))}
 function renderPower(s){const m=metricsSeason();if(!m)return section('Power rankings','<p>Loading ratings…</p>');const league=ss(),by=new Map(league.teams.map(t=>[t.id,t])),parts=['Elo','All-play','Scoring','Schedule','Recent form'];
