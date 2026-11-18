@@ -1,4 +1,5 @@
-import importlib.util, pathlib, unittest, json
+import importlib.util, pathlib, unittest, json, sys
+sys.path.insert(0,str(pathlib.Path(__file__).resolve().parents[1]/'scripts'))
 spec=importlib.util.spec_from_file_location('analytics',pathlib.Path(__file__).resolve().parents[1]/'scripts/sync_analytics.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 class AnalyticsTests(unittest.TestCase):
  def test_flex_assignment_does_not_reuse_players(self):
