@@ -195,3 +195,11 @@ Position SOS divides opponent standard-PPR allowed/game by the unweighted mean o
 Player comparison supports up to four players, an upcoming-week selector, observed PPR production, last four recorded appearances, opportunity shares and opponent allowed rank. It includes no expert consensus, licensed projection feeds or betting lines.
 
 League format uses the next scorer after `league teams × starters` as each position's weekly replacement cutoff. Quality starts exceed that cutoff; signed points above replacement sum only covered appearances. This uses standard PPR and primary positions, excludes FLEX, and does not claim WAR or win projections. The team dashboard radar uses modeled primary-slot scoring, excludes FLEX, and is relative to the roster's own maximum position, not a league rank.
+
+### Grouped research navigation and chart inspection
+
+`research-ui.js` groups all 16 tool routes into Analyze, Season outlook, Manage team, and NFL research. Desktop category buttons reveal only that group's tools. Phones use category and tool selectors. Deep links retain their original `#research/tool` routes and select the matching category automatically; each group remembers its last visited tool during the session.
+
+Roster strength uses the existing recent AMFL weekly baseline model, not market values or projections. Overall ranks are assigned only to complete covered lineups. Summary bars start at zero; slot bars normalize to the largest covered assignment of the same slot across managers and show the comparison count. FLEX cannot reuse an already assigned player. Bench totals exclude reserve/taxi slots. Recent scoring movers require all four recorded calendar weeks, comparing two two-week averages on the current roster.
+
+Utilization scatter points support pointer hover, tap/click, keyboard focus, Enter/Space selection and Escape clearing. The inspection panel identifies player/team/position and the share and PPR/game plotted. Native titles remain as fallback. Position colors and stable manager identities are shared across links and roster graphics. Research and main-site headings retain neutral text with varied accents instead of coloring every label blue.

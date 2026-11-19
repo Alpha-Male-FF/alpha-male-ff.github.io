@@ -5,7 +5,7 @@ const research=JSON.parse(fs.readFileSync('research-data.json')),nfl=JSON.parse(
 const nodes=new Map();
 function el(key){if(!nodes.has(key))nodes.set(key,{value:key==='#season'?'2026':key==='#manager'?'Seth':'',innerHTML:'',textContent:'',open:false,addEventListener(){},setAttribute(){},querySelectorAll(){return []},insertAdjacentHTML(position,content){this.innerHTML+=content},showModal(){this.open=true},close(){this.open=false},focus(){},classList:{add(){},toggle(){},contains(){return false}}});return nodes.get(key)}
 const context={document:{querySelector:el,body:el('body')},localStorage:{getItem(){return null}},fetch:async path=>({ok:true,json:async()=>path.includes('tools-data')?tools:path.includes('research-data')?research:path.includes('nflverse-data')?nfl:base}),console,Date};
-vm.createContext(context);vm.runInContext(fs.readFileSync('analytics.js','utf8'),context);vm.runInContext(fs.readFileSync('analytics-tools.js','utf8'),context);vm.runInContext(fs.readFileSync('research-extras.js','utf8'),context);vm.runInContext(fs.readFileSync('research-tools.js','utf8'),context);
+vm.createContext(context);vm.runInContext(fs.readFileSync('analytics.js','utf8'),context);vm.runInContext(fs.readFileSync('analytics-tools.js','utf8'),context);vm.runInContext(fs.readFileSync('research-extras.js','utf8'),context);vm.runInContext(fs.readFileSync('research-tools.js','utf8'),context);vm.runInContext(fs.readFileSync('research-ui.js','utf8'),context);
 setImmediate(()=>{
  for(const season of base.seasons)for(const team of season.teams)for(const tab of ['overview','power','schedule','bracket','nfl','rosters','trades','calculator','waivers','commissioner','players','utilization','positionsos','compare','format','dashboard']){
   el('#season').value=String(season.year);el('#manager').value=team.name;vm.runInContext(`labTab=${JSON.stringify(tab)};draw()`,context);
@@ -22,5 +22,9 @@ setImmediate(()=>{
  const sum=vm.runInContext('ss().teams.reduce((v,t)=>v+scenarioWins(ts(),t.id,new Map([[ss().teams[0].id,5],[ss().teams[1].id,-5]])),0)',context);assert.ok(Math.abs(sum)<1e-6,'Scenario wins must conserve league wins');
  const sos=vm.runInContext('sosRows(nflYear(),"WR",11,17)',context);assert.equal(sos.length,32);assert.ok(sos.every(r=>r.weeks.length===7));
  assert.ok(vm.runInContext('formatTeams=10;formatQB=1;formatRB=2;formatWR=2;formatTE=1;renderFormat(ts())',context).includes('Points above cutoff'));
+ assert.equal(vm.runInContext('new Set(researchGroups.flatMap(g=>g.tools)).size',context),16);
+ assert.equal(vm.runInContext('researchGroupFor("calculator").id',context),'manage');
+ const roster=vm.runInContext('renderRosters(ts())',context);assert.ok(roster.includes('Starter scoring by slot'));assert.ok(roster.includes('Recent scoring movers'));assert.ok(!roster.includes('Market value'));
+ const dots=vm.runInContext('scatterChart(nflYear().players.slice(0,10),"target_share","Fixture")',context);assert.ok(dots.includes('data-dot-name'));assert.ok(dots.includes('tabindex="0"'));
  console.log('Passed all 480 season/manager/tool renders, lineup assignment checks and player profile render.');
 });

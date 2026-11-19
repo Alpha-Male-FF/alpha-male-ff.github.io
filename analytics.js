@@ -6,7 +6,7 @@ const columns=[['name','Manager'],['wins','W'],['losses','L'],['ties','T'],['pf'
 function table(headers,rows){return `<div class="scroll"><table><thead><tr>${headers.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`}
 function card(label,value,detail=''){return `<div class="card"><span class="label">${label}</span><strong>${value}</strong><small>${detail}</small></div>`}
 function bars(items){return items.map(([name,value])=>`<div class="barrow"><span>${esc(name)}</span><div class="track"><div class="fill" style="width:${Math.max(0,Math.min(100,value*100))}%"></div></div><strong>${pct(value)}</strong></div>`).join('')}
-function draw(){if(!data)return;if(typeof renderLab==='function' && labTab!=='overview'){renderLab()}else{drawOverview()}if(typeof enhanceResearchLinks==='function')enhanceResearchLinks();if(typeof attachWorkbench==='function')attachWorkbench()}
+function draw(){if(!data)return;if(typeof renderLab==='function' && labTab!=='overview'){renderLab()}else{drawOverview()}if(typeof enhanceResearchLinks==='function')enhanceResearchLinks();if(typeof attachWorkbench==='function')attachWorkbench();if(typeof paintResearch==='function')paintResearch()}
 function drawOverview(){
  const season=data.seasons.find(s=>s.year===+$('#season').value),t=season.teams.find(t=>t.name===$('#manager').value)||season.teams[0];
  if(!t){$('#app').textContent='No completed weeks for this season.';return}

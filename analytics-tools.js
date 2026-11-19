@@ -6,7 +6,7 @@ const ss=()=>data?.seasons.find(s=>s.year===+$('#season').value);
 const selectedTeam=()=>ss()?.teams.find(t=>t.name===$('#manager').value);
 const pn=(s,id)=>s.profiles[id]?.name||String(id);
 const personButton=(s,id)=>typeof teamAnchor==='function'?teamAnchor(s,id):`<a class="textbutton" href="#manager/${encodeURIComponent(s.names[id]||id)}" data-name="${esc(s.names[id]||id)}">${esc(s.names[id]||id)}</a>`;
-const playerButton=(s,id)=>`<button class="textbutton" data-player="${esc(id)}">${esc(pn(s,id))}</button>`;
+const playerButton=(s,id)=>`<button class="textbutton playerName" data-position="${esc(s.profiles[id]?.positions[0]||'WR')}" data-player="${esc(id)}">${esc(pn(s,id))}</button>`;
 const tdrow=items=>`<tr>${items.map(v=>`<td>${v}</td>`).join('')}</tr>`;
 const section=(title,body,note='')=>`<section class="panel"><h2>${title}</h2>${note?`<p class="note">${note}</p>`:''}${body}</section>`;
 const dateLabel=ms=>ms?new Date(ms).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'America/Denver'}):'Date unavailable';
@@ -30,7 +30,7 @@ function assignLineup(s,ids,allowPartial=false){
  const complete=dp.get(full);if(complete)return {...complete,missing:[]};if(!allowPartial)return null;
  const bits=mask=>mask.toString(2).replace(/0/g,'').length;const [mask,best]=[...dp].sort((a,b)=>bits(b[0])-bits(a[0])||b[1].total-a[1].total)[0];return {...best,missing:slots.filter((slot,i)=>!(mask&(1<<i)))};
 }
-function renderRosters(s){
+function renderRosterTables(s){
  const rosterRows=s.rosters.map(r=>{const known=rates(s,r),lineup=assignLineup(s,known.map(p=>p.id));return {r,known,lineup}}).sort((a,b)=>(b.lineup?.total??-Infinity)-(a.lineup?.total??-Infinity));
  const selected=selectedTeam()?.id;const groups=['QB','RB','WR','TE','K','DEF'];
  const values=rosterRows.map(({r})=>Object.fromEntries(groups.map(pos=>{const ids=rosterMode==='starters'?r.starters:r.players;const subset=ids.map(id=>s.profiles[id]).filter(p=>p?.positions.includes(pos));const known=subset.filter(p=>p.baseline!=null);return [pos,{value:known.length?known.reduce((n,p)=>n+p.baseline,0):null,n:known.length,total:subset.length}]})));
@@ -92,5 +92,5 @@ $('#app').addEventListener('change',e=>{const map={tradeScope:v=>tradeScope=v,re
 $('#app').addEventListener('input',e=>{if(e.target.dataset.filterSide){const side=e.target.dataset.filterSide,query=e.target.value.toLowerCase();$('#list'+side).querySelectorAll('[data-player-label]').forEach(row=>row.hidden=!row.dataset.playerLabel.includes(query))}if(e.target.id==='playerSearch'){playerQuery=e.target.value;const s=ts(),list=Object.values(s.profiles).filter(p=>p.name.toLowerCase().includes(playerQuery.toLowerCase())).sort((a,b)=>b.total-a.total);$('#playerRows').innerHTML=playerTable(s,list);$('#playerCount').textContent=list.length}});
 $('#app').addEventListener('click',e=>{const p=e.target.closest('[data-player]'),mode=e.target.closest('[data-roster-mode]');if(p)openPlayer(p.dataset.player);if(mode){rosterMode=mode.dataset.rosterMode;draw()}if(e.target.id==='moreLedger'){ledgerLimit+=30;draw()}if(e.target.id==='retryTools')loadTools()});
 $('#closePlayer').addEventListener('click',()=>$('#playerDialog').close());
-function loadTools(){toolsError=null;fetch('analytics-tools-data.json?v=20261118-r9').then(r=>{if(!r.ok)throw Error('Tools snapshot request failed');return r.json()}).then(d=>{toolsData=d;if(data)draw()}).catch(e=>{toolsError=e;if(data&&labTab!=='overview')draw();console.error(e)})}loadTools();
+function loadTools(){toolsError=null;fetch('analytics-tools-data.json?v=20261118-r10').then(r=>{if(!r.ok)throw Error('Tools snapshot request failed');return r.json()}).then(d=>{toolsData=d;if(data)draw()}).catch(e=>{toolsError=e;if(data&&labTab!=='overview')draw();console.error(e)})}loadTools();
 $('#season').addEventListener('change',()=>{tradeA=null;tradeB=null;chosenA.clear();chosenB.clear();ledgerLimit=30;if(data)draw()});
