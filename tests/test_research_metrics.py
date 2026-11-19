@@ -30,3 +30,17 @@ class ResearchTests(unittest.TestCase):
   self.assertNotIn('src="./analytics.html"',html);self.assertIn('/#research',(ROOT/'analytics.html').read_text())
   self.assertIn('attachShadow',(ROOT/'research.js').read_text())
 if __name__=='__main__':unittest.main()
+
+class EnhancedNFLTests(unittest.TestCase):
+    def test_published_utilization_integrity(self):
+        import json
+        from pathlib import Path
+        snapshot=json.loads(Path('nflverse-data.json').read_text())
+        for y in snapshot['seasons']:
+            self.assertGreater(len(y['players']),400)
+            for p in y['players']:
+                self.assertEqual(p['games'],len(p['weekly']))
+                self.assertAlmostEqual(p['ppg']*p['games'],p['fantasy_points_ppr'],places=5)
+                for key in ['rush_share','target_share','snap_pct']:
+                    if p[key] is not None:self.assertTrue(0<=p[key]<=1,(p['name'],key,p[key]))
+                self.assertLessEqual(p['snap_weeks'],p['games'])

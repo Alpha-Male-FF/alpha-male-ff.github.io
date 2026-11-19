@@ -183,3 +183,15 @@ nflverse extracts. A failed NFL refresh leaves the prior published files intact.
 Validation includes `python -m unittest discover -s tests -v`,
 `node tests/test_analytics_ui.cjs` (330 season/manager/tool renders), and browser
 checks of main-tab routing, profile links, calculator controls and mobile layout.
+
+### Phone layouts and research workbench
+
+Research tables turn into labeled stat cards below 850px. The playoff bracket becomes a vertical round-by-round layout; outcome paths become labeled probability bars. Charts scale within their containers. `amfl-theme.css` supplies the shared red/blue appearance, with gold reserved for accents, across the main site, records and player-history pages. `responsive-tables.js` labels dynamic archive tables.
+
+`research-tools.js` adds Team dashboard, Utilization, Position SOS, Compare players and League format. NFL weekly releases now include RBs, carries, standard PPR totals and recorded appearances. Offensive snap percentages come from nflverse's `snap_counts` release, matched only by unique normalized player-name/team/week; unverified matches remain missing. Snap percentage is the arithmetic mean across matched recorded weeks. Player/team stints remain separate; manager matching requires a unique normalized Sleeper player name on the selected season's roster. This is current-roster context, not historical ownership per NFL week.
+
+Position SOS divides opponent standard-PPR allowed/game by the unweighted mean of all NFL defenses, minus 1. Selected-week averages exclude byes and missing opponents. These are retrospective season-to-date defensive ratings applied to a selectable schedule window, not opponent-adjusted projections. QB/RB/WR/TE supported; K/DST omitted for lack of comparable scored units.
+
+Player comparison supports up to four players, an upcoming-week selector, observed PPR production, last four recorded appearances, opportunity shares and opponent allowed rank. It includes no expert consensus, licensed projection feeds or betting lines.
+
+League format uses the next scorer after `league teams × starters` as each position's weekly replacement cutoff. Quality starts exceed that cutoff; signed points above replacement sum only covered appearances. This uses standard PPR and primary positions, excludes FLEX, and does not claim WAR or win projections. The team dashboard radar uses modeled primary-slot scoring, excludes FLEX, and is relative to the roster's own maximum position, not a league rank.

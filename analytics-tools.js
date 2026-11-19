@@ -13,7 +13,7 @@ const dateLabel=ms=>ms?new Date(ms).toLocaleDateString('en-US',{month:'short',da
 function renderLab(){
  if(!toolsData){$('#app').innerHTML=`<section class="panel" role="status">${toolsError?'The tools snapshot could not load. <button id="retryTools">Retry</button>':'Loading roster and transaction evidence…'}</section>`;return}
  const s=ts();if(!s){$('#app').textContent='No tools snapshot for this season.';return}
- $('#app').innerHTML=({rosters:renderRosters,trades:renderTrades,calculator:renderCalculator,waivers:renderWaivers,commissioner:renderCommissioner,players:renderPlayers,power:renderPower,schedule:renderSchedule,bracket:renderBracket,nfl:renderNFL}[labTab])(s);
+ $('#app').innerHTML=({rosters:renderRosters,trades:renderTrades,calculator:renderCalculator,waivers:renderWaivers,commissioner:renderCommissioner,players:renderPlayers,power:renderPower,schedule:renderSchedule,bracket:renderBracket,nfl:renderNFL,utilization:renderUtilization,positionsos:renderPositionSOS,compare:renderCompare,format:renderFormat,dashboard:renderDashboard}[labTab])(s);
  $('#methods').innerHTML=toolsMethods(s);
  if(labTab==='calculator')calculateTrade();if(labTab==='nfl')attachNFLControls();
 }
@@ -92,5 +92,5 @@ $('#app').addEventListener('change',e=>{const map={tradeScope:v=>tradeScope=v,re
 $('#app').addEventListener('input',e=>{if(e.target.dataset.filterSide){const side=e.target.dataset.filterSide,query=e.target.value.toLowerCase();$('#list'+side).querySelectorAll('[data-player-label]').forEach(row=>row.hidden=!row.dataset.playerLabel.includes(query))}if(e.target.id==='playerSearch'){playerQuery=e.target.value;const s=ts(),list=Object.values(s.profiles).filter(p=>p.name.toLowerCase().includes(playerQuery.toLowerCase())).sort((a,b)=>b.total-a.total);$('#playerRows').innerHTML=playerTable(s,list);$('#playerCount').textContent=list.length}});
 $('#app').addEventListener('click',e=>{const p=e.target.closest('[data-player]'),mode=e.target.closest('[data-roster-mode]');if(p)openPlayer(p.dataset.player);if(mode){rosterMode=mode.dataset.rosterMode;draw()}if(e.target.id==='moreLedger'){ledgerLimit+=30;draw()}if(e.target.id==='retryTools')loadTools()});
 $('#closePlayer').addEventListener('click',()=>$('#playerDialog').close());
-function loadTools(){toolsError=null;fetch('analytics-tools-data.json?v=20261118-r5').then(r=>{if(!r.ok)throw Error('Tools snapshot request failed');return r.json()}).then(d=>{toolsData=d;if(data)draw()}).catch(e=>{toolsError=e;if(data&&labTab!=='overview')draw();console.error(e)})}loadTools();
+function loadTools(){toolsError=null;fetch('analytics-tools-data.json?v=20261118-r6').then(r=>{if(!r.ok)throw Error('Tools snapshot request failed');return r.json()}).then(d=>{toolsData=d;if(data)draw()}).catch(e=>{toolsError=e;if(data&&labTab!=='overview')draw();console.error(e)})}loadTools();
 $('#season').addEventListener('change',()=>{tradeA=null;tradeB=null;chosenA.clear();chosenB.clear();ledgerLimit=30;if(data)draw()});

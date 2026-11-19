@@ -1,0 +1,2 @@
+/* Label responsive stat cards without changing desktop table semantics or sort controls. */
+(()=>{let queued=false;function label(){queued=false;for(const t of document.querySelectorAll('.tablewrap table')){const heads=[...t.querySelectorAll('thead th')].map(x=>x.textContent.trim());for(const r of t.querySelectorAll('tbody tr'))[...r.cells].forEach((c,i)=>{const v=heads[i]||'Value';if(c.dataset.label!==v)c.dataset.label=v})}}new MutationObserver(()=>{if(!queued){queued=true;requestAnimationFrame(label)}}).observe(document.body,{childList:true,subtree:true});label()})();
