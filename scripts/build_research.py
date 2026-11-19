@@ -2,7 +2,7 @@
 """Build the Research custom element from its plain JavaScript sources; no framework/runtime dependencies."""
 import pathlib,re,json
 ROOT=pathlib.Path(__file__).resolve().parents[1]
-VERSION='20261118-r7'
+VERSION='20261118-r8'
 template=(ROOT/'research-template.html').read_text()
 markup=re.search(r'<main>(.*?)</main>',template,re.S).group(1)+re.search(r'<dialog.*?</dialog>',template,re.S).group(0)
 markup='<div class="research-shell"><main>'+markup.split('<dialog')[0]+'</main><dialog'+markup.split('<dialog',1)[1]+'</div>'
@@ -19,8 +19,9 @@ class AMFLResearch extends HTMLElement {
  new MutationObserver(syncTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
  SOURCE
  const supported=['overview','power','schedule','bracket','nfl','rosters','trades','calculator','waivers','commissioner','players','dashboard','utilization','positionsos','compare','format'];
- this.navigate=tool=>{if(!supported.includes(tool))tool='overview';labTab=tool;root.querySelectorAll('[data-tool]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tool===tool)));if(data)draw()};
- root.querySelector('#labNav').addEventListener('click',e=>{if(e.target.closest('[data-tool]'))history.replaceState(null,'','#research/'+labTab)});
+ const mobileNav=document.createElement('label');mobileNav.className='mobileResearchNav';mobileNav.textContent='Research tool ';const mobileSelect=document.createElement('select');mobileSelect.setAttribute('aria-label','Research tool');for(const button of root.querySelectorAll('[data-tool]')){const option=document.createElement('option');option.value=button.dataset.tool;option.textContent=button.textContent;mobileSelect.append(option)}mobileNav.append(mobileSelect);root.querySelector('#labNav').before(mobileNav);mobileSelect.onchange=()=>{this.navigate(mobileSelect.value);history.replaceState(null,'','#research/'+labTab)};
+ this.navigate=tool=>{if(!supported.includes(tool))tool='overview';labTab=tool;mobileSelect.value=tool;root.querySelectorAll('[data-tool]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tool===tool)));if(data)draw()};
+ root.querySelector('#labNav').addEventListener('click',e=>{if(e.target.closest('[data-tool]')){mobileSelect.value=labTab;history.replaceState(null,'','#research/'+labTab)}});
  this.navigate(location.hash.split('/')[1]||'overview');
  }
 }
