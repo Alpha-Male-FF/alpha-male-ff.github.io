@@ -25,6 +25,7 @@ setImmediate(()=>{
  assert.equal(vm.runInContext('new Set(researchGroups.flatMap(g=>g.tools)).size',context),16);
  assert.equal(vm.runInContext('researchGroupFor("calculator").id',context),'manage');
  const roster=vm.runInContext('renderRosters(ts())',context);assert.ok(roster.includes('Starter scoring by slot'));assert.ok(roster.includes('Recent scoring movers'));assert.ok(!roster.includes('Market value'));
+ const models=vm.runInContext('rosterModels(ts())',context);for(const row of models){assert.equal(new Set(row.lineup.picks.map(p=>p.id)).size,row.lineup.picks.length);for(const slot of ['RB','WR']){const same=row.lineup.picks.filter(p=>p.slot===slot).sort((a,b)=>a.slotIndex-b.slotIndex);if(same.length>1)assert.ok(same[0].baseline>=same[1].baseline,'Primary slots should show highest baseline first')}}
  const dots=vm.runInContext('scatterChart(nflYear().players.slice(0,10),"target_share","Fixture")',context);assert.ok(dots.includes('data-dot-name'));assert.ok(dots.includes('tabindex="0"'));
  console.log('Passed all 480 season/manager/tool renders, lineup assignment checks and player profile render.');
 });

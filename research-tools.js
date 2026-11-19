@@ -4,7 +4,7 @@ const nflYear=()=>nflSnapshot?.seasons.find(y=>y.year===+$('#season').value);
 const normalizeName=n=>n.toLowerCase().replace(/[^a-z0-9]/g,'').replace(/(iii|jr)$/,'');
 function nflPool(y){return y?.players||[]}
 function ownerFor(s,p){const ids=Object.values(s.profiles).filter(x=>normalizeName(x.name)===normalizeName(p.name));if(ids.length!==1)return null;return s.rosters.find(r=>r.players.includes(ids[0].id))?.id}
-function nflPlayerName(s,p){const own=Object.values(s.profiles).filter(x=>normalizeName(x.name)===normalizeName(p.name));return own.length===1?playerButton(s,own[0].id):esc(p.name)}
+function nflPlayerName(s,p){const own=Object.values(s.profiles).filter(x=>normalizeName(x.name)===normalizeName(p.name));return own.length===1?playerButton(s,own[0].id):`<span class="playerName" data-position="${esc(p.position)}">${esc(p.name)}</span>`}
 function toolLoading(title){return section(title,nflError?'<p>NFL data could not load. Reload the page to retry.</p>':'<p>Loading NFL research data…</p>')}
 function statOptions(values,current){return values.map(v=>`<option value="${esc(v)}" ${String(v)===String(current)?'selected':''}>${esc(v)}</option>`).join('')}
 function exportButton(){return '<button data-export-table>Download displayed CSV</button>'}

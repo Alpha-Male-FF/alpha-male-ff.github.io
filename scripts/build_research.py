@@ -2,7 +2,7 @@
 """Build the Research custom element from its plain JavaScript sources; no framework/runtime dependencies."""
 import pathlib,re,json
 ROOT=pathlib.Path(__file__).resolve().parents[1]
-VERSION='20261118-r10'
+VERSION='20261118-r11'
 template=(ROOT/'research-template.html').read_text()
 markup=re.search(r'<main>(.*?)</main>',template,re.S).group(1)+re.search(r'<dialog.*?</dialog>',template,re.S).group(0)
 markup='<div class="research-shell"><main>'+markup.split('<dialog')[0]+'</main><dialog'+markup.split('<dialog',1)[1]+'</div>'
