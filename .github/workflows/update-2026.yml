@@ -2,8 +2,8 @@ name: Refresh Sleeper 2026 standings
 
 on:
   schedule:
-    # Runs every Tuesday at 15:17 UTC (after Monday Night Football stats settle)
-    - cron: '17 15 * * 2'
+    # Runs at the start of every hour (UTC)
+    - cron: '0 * * * *'
   workflow_dispatch:
 
 permissions:
